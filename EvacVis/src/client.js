@@ -20,6 +20,9 @@ export class Client extends Component{
         this.fillMessageConfig = this.fillMessageConfig.bind(this);
         this.updateConfigOptions = this.updateConfigOptions.bind(this);
         this.processConfigDialog = this.processConfigDialog.bind(this);
+        this.toggleEventDialog = this.toggleEventDialog.bind(this);
+        this.processEventDialog = this.processEventDialog.bind(this);
+        this.fillMessageEvent = this.fillMessageEvent.bind(this);
     }
 
     upDateAddress(){
@@ -38,7 +41,6 @@ export class Client extends Component{
         document.getElementsByName("send_txt")[0].value = "CREATE";
     }
 
-
     fillMessageStart(){
         document.getElementsByName("send_txt")[0].value = "START";
     }
@@ -54,6 +56,18 @@ export class Client extends Component{
             d.style.display = "none";
         }
     }
+
+    toggleEventDialog() {
+        let d = document.getElementsByName("event_dialog")[0];
+
+        if (d.style.display === "none") {
+            d.style.display = "block";
+        }
+        else {
+            d.style.display = "none";
+        }
+    }
+
 
     fillMessageConfig() {
         // build the message which will be placed in the send message box
@@ -93,8 +107,45 @@ export class Client extends Component{
         document.getElementsByName("send_txt")[0].value = template;
     }
 
+    fillMessageEvent() {
+        // build the message which will be placed in the send message box
+        let template = "EVENT\n";
+
+        let user_linkid = document.getElementsByName("select_link")[0].value;
+        let user_stime = document.getElementsByName("start_time")[0].value;
+        let user_etime = document.getElementsByName("end_time")[0].value;
+        let user_value1 = document.getElementsByName("value1")[0].value;
+        let user_value2 = document.getElementsByName("value2")[0].value;
+
+        var user_options = {};
+
+        if (user_linkid && user_linkid !== "") {
+            user_options["link"] = user_linkid;
+        }
+
+        if (user_stime && user_stime !== "") {
+            user_options["start_time"] = user_stime;
+        }
+
+        if (user_etime && user_etime !== "") {
+            user_options["end_time"] = user_etime;
+        }
+
+        if (user_value1 && user_value1 !== "") {
+            user_options["value1"] = user_value1;
+        }
+
+        if (user_value2 && user_value2 !== "") {
+            user_options["value2"] = user_value2;
+        }
+
+        template += JSON.stringify(user_options);
+
+        // set the constructed message in the text field
+        document.getElementsByName("send_txt")[0].value = template;
+    }
+
     updateConfigOptions(options) {
-        // TODO: build the dialog box GUI for config completely dynamically
 
         // parse the name field options
         let nameOption = options["name"];
@@ -161,58 +212,97 @@ export class Client extends Component{
     }
 
     processConfigDialog() {
-        // TODO: write configuration dialog box processing function
+        // fill the text box with configuration
         this.fillMessageConfig();
 
         // hide the configuration dialog box
         this.toggleConfigDialog();
     }
 
-
+    processEventDialog(){
+        this.fillMessageEvent();
+        this.toggleEventDialog();
+    }
 
     render() {
-        const {connected, connectServer, disConnectServer, sendMessage, loadHistory, maximal_time} = this.props;
+        const {connected, synchronized, connectServer, disConnectServer, sendMessage, loadHistory, synchronizeController, releaseController, maximal_time} = this.props;
         const {message, address, hist_addr,max_tick} = this.state;
         if (connected) {
-            return (
-                <div style={clientControl}>
-                    <form name="template_form">
-                        <input type="button" name="create_btn" disabled={false} value="Create"
-                               onClick={this.fillMesageCreate} style={{width: '80px'}}/><br/>
-                        <input type="button" name="config_btn" disabled={false} value="Config"
-                               onClick={this.toggleConfigDialog} style={{width: '80px'}}/><br/>
-                        <input type="button" name="start_btn" disabled={false} value="Start"
-                               onClick={this.fillMessageStart}
-                               style={{width: '80px'}}/>
-                    </form>
-                    <div>
-                        <textarea name="send_txt" onChange={this.upDateMess}/>
-                        <input type="button" name="send_btn" value="Send"
-                               onClick={sendMessage}/>
+            if(synchronized){
+                return(
+                    <div style={clientControl}>
+                        <form name="template_form">
+                            Selected link: <input type="text" name="select_link" style={{width: '50px'}} disabled="disabled"/>
+                            <input type="button" name="event_btn" disabled={false} value="Event"
+                                   onClick={this.toggleEventDialog} style={{width: '80px'}}/><br/>
+                            <input type="button" name="desynchronize_btn" disabled={false} value="Desynchronize"
+                                   onClick={releaseController} style={{width: '120px'}}/>
+                        </form>
+                        <div>
+                            <textarea name="send_txt" onChange={this.upDateMess}/>
+                            <input type="button" name="send_btn" value="Send"
+                                   onClick={sendMessage}/>
+                        </div>
+                        <div> Status: <b style={{color: "green"}}>Connected.</b> <u
+                            onClick={disConnectServer}>(Disconnect)</u></div>
+                        <div style={{float:"left"}}>
+                            Simulation time: <input type="text" name="max_time" style={{width: '50px'}} disabled="disabled"/>
+                        </div>
+                        <dialog name="event_dialog" style={{display: "none"}}>
+                            <p><strong><em>Configure the event here:</em></strong></p>
+                            <p>Start Time: <input type="text" name="start_time" style={{width: '200px'}}/></p>
+                            <p>End Time: <input type="text" name="end_time" style={{width: '200px'}}/></p>
+                            <p>Value 1: <input type="text" name="value1" style={{width: '250px'}}/></p>
+                            <p>Value 2: <input type="text" name="value2" style={{width: '250px'}}/></p>
+                            <br/>
+                            <input type="button" name="set_event" value="Accept" onClick={this.processEventDialog}/>
+                            <input type="button" name="cancel_event" value="Cancel" onClick={this.toggleEventDialog}/>
+                        </dialog>
                     </div>
-                    <div> Status: <b style={{color: "green"}}>Connected.</b> <u
-                        onClick={disConnectServer}>(Disconnect)</u></div>
-                    <div style={{float:"left"}}>
-                        Simulation time: <input type="text" name="max_time" style={{width: '50px'}} disabled="disabled"/>
+                )
+            }
+            else{
+                return (
+                    <div style={clientControl}>
+                        <form name="template_form">
+                            <input type="button" name="create_btn" disabled={false} value="Create"
+                                   onClick={this.fillMesageCreate} style={{width: '80px'}}/><br/>
+                            <input type="button" name="config_btn" disabled={false} value="Config"
+                                   onClick={this.toggleConfigDialog} style={{width: '80px'}}/><br/>
+                            <input type="button" name="start_btn" disabled={false} value="Start"
+                                   onClick={this.fillMessageStart} style={{width: '80px'}}/><br/>
+                            <input type="button" name="synchronize_btn" disabled={false} value="Synchronize"
+                                   onClick={synchronizeController} style={{width: '120px'}}/>
+                        </form>
+                        <div>
+                            <textarea name="send_txt" onChange={this.upDateMess}/>
+                            <input type="button" name="send_btn" value="Send"
+                                   onClick={sendMessage}/>
+                        </div>
+                        <div> Status: <b style={{color: "green"}}>Connected.</b> <u
+                            onClick={disConnectServer}>(Disconnect)</u></div>
+                        <div style={{float:"left"}}>
+                            Simulation time: <input type="text" name="max_time" style={{width: '50px'}} disabled="disabled"/>
+                        </div>
+                        <dialog name="config_dialog" style={{display: "none"}}>
+                            <p><strong><em>Configure the parameters of the simulation here:</em></strong></p>
+                            <p>Name: <input type="text" name="config_name" style={{width: '250px'}}/></p>
+                            <p>Demand File: <select name="config_demand"
+                                                    style={{width: '200px'}}/></p>
+                            <p>Event File: <select name="config_event" style={{width: '250px'}}/></p>
+                            <p>Routing Algorithm: <select name="config_routing" style={{width: '100px'}}/></p>
+                            <p>Simulation Length: <input type="range" name="config_ticks" min="1" max="10" step="1"
+                                                         style={{width: '175px'}}
+                                                         onChange={
+                                                             e => this.setState({max_tick: e.target.value}, ()=> console.log(this.state.max_tick))}/>
+                                &nbsp; <span name="tick_value">{max_tick}</span></p>
+                            <br/>
+                            <input type="button" name="set_config" value="Accept" onClick={this.processConfigDialog}/>
+                            <input type="button" name="cancel_config" value="Cancel" onClick={this.toggleConfigDialog}/>
+                        </dialog>
                     </div>
-                    <dialog name="config_dialog" style={{display: "none"}}>
-                        <p><strong><em>Configure the parameters of the simulation here:</em></strong></p>
-                        <p>Name: <input type="text" name="config_name" style={{width: '250px'}}/></p>
-                        <p>Demand File: <select name="config_demand"
-                                                                          style={{width: '200px'}}/></p>
-                        <p>Event File: <select name="config_event" style={{width: '250px'}}/></p>
-                        <p>Routing Algorithm: <select name="config_routing" style={{width: '100px'}}/></p>
-                        <p>Simulation Length: <input type="range" name="config_ticks" min="1" max="10" step="1"
-                                                     style={{width: '175px'}}
-                                                     onChange={
-                                                     e => this.setState({max_tick: e.target.value}, ()=> console.log(this.state.max_tick))}/>
-                        &nbsp; <span name="tick_value">{max_tick}</span></p>
-                        <br/>
-                        <input type="button" name="set_config" value="Accept" onClick={this.processConfigDialog}/>
-                        <input type="button" name="cancel_config" value="Cancel" onClick={this.toggleConfigDialog}/>
-                    </dialog>
-                </div>
-            );
+                );
+            }
         } else {
             return (
                 <div style={clientControl}>

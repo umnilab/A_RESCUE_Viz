@@ -95,11 +95,13 @@ class App extends Component{
     super(props);
 
     this.state = {
-      connected: false,
+      connected: false, // whether or not connect to the server
+      synchronized: false, // false: asynchronized mode, loading data from the file directories, true: loading data directly from returned messages
       data_url: null,
       prefix: null,
       data: [], //current data
       subdata: [], //new data
+      currentdata: [], //data for real time display
       vehicles1: [],
       vehicles2: [],
       roadspeed: new Map(linkdict),
@@ -118,6 +120,7 @@ class App extends Component{
     this._onSelectLink = this._onSelectLink.bind(this);
     this._onHoverVehicle = this._onHoverVehicle.bind(this);
     this._onHoverLink = this._onHoverLink.bind(this);
+    this._onSelectEventLink = this._onSelectEventLink.bind(this);
     this._renderTooltip = this._renderTooltip.bind(this);
     this._renderTooltip2 = this._renderTooltip2.bind(this);
     this.connectServer = this.connectServer.bind(this);
@@ -125,6 +128,8 @@ class App extends Component{
     this.loadNow = this.loadNow.bind(this);
     this.updateConfigOptions = this.updateConfigOptions.bind(this);
     this.disConnectServer = this.disConnectServer.bind(this);
+    this.synchronizeController = this.synchronizeController.bind(this);
+    this.releaseController = this.releaseController.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
     this.upDateMaximalTime = this.upDateMaximalTime.bind(this);
     this.resetCurrentTime = this.resetCurrentTime.bind(this);
@@ -136,7 +141,7 @@ class App extends Component{
   time_step=40; // Ticks per file
   buffer_time = 20; // Buffer_time for loading new data
   currentFrame = null;
-  framesPerTick = 70; //The maximum frame per tick
+  framesPerTick = 60; //The maximum frame per tick
 
   // When open the webpage
   componentDidMount(){
@@ -146,6 +151,8 @@ class App extends Component{
         loadNow: this.loadNow,
         updateConfigOptions: this.updateConfigOptions,
         disConnectServer: this.disConnectServer ,
+        synchronizeController: this.synchronizeController ,
+        releaseController: this.releaseController ,
         sendMessage:this.sendMessage,
         upDateMaximalTime: this.upDateMaximalTime,
         resetCurrentTime: this.resetCurrentTime});
@@ -217,6 +224,16 @@ class App extends Component{
             console.log("Something goes wrong when reading options.");
           }
         }
+        else if(evt_type == 'DATA'){
+          try{
+            let record = JSON.parse(evt_msg);
+            updateCurrentTick(record);
+          }
+          catch (e) {
+            // something is wrong with the conf object parsing
+            console.log("Something goes wrong when loading current tick.");
+          }
+        }
         else {
           // handle an unknown message type
         }
@@ -225,8 +242,6 @@ class App extends Component{
     else{
       console.log("Connection failed");
     }
-
-
   }
 
   disConnectServer(){
@@ -234,9 +249,28 @@ class App extends Component{
       ws.close();
       ws = null;
     }
-    this.setState({connected: false})
+    this.setState({connected: false, synchronized: false})
     console.log("connection closed");
   }
+
+  synchronizeController(){
+    if(ws != null){
+      this.setState({synchronized: true});
+      if (this.timer) {
+        this.timer.stop();
+      }
+    }
+    console.log("synchronized to instance");
+  }
+
+  releaseController(){
+    if(ws != null){
+      this.setState({synchronized: false})
+    }
+    this.restartAnimation();
+    console.log("desynchronized to instance");
+  }
+
 
   sendMessage(){
     if(ws !=null){
@@ -277,6 +311,10 @@ class App extends Component{
 
   updateConfigOptions(options){
     this.setState({options:options},()=>console.log(this.state.options))
+  }
+
+  updateCurrentTick(record){
+    this.setState({currentData:record},()=>console.log(this.state.currentData))
   }
 
   resetCurrentTime(){
@@ -321,17 +359,17 @@ class App extends Component{
   };
 
   startAnimation = () => {
-    if(this.current_time >= (this.last_time)) {
+    if(this.current_time >= (this.last_time)) { // This piece does not work at all...
       this.fetchData(this.last_time+this.time_step);
     }
     else{
       //console.log(this.state.data[(this.current_time).toFixed(1)])
-      if(this.state.data[(this.current_time+this.buffer_time).toFixed(1)]){
+      if(this.state.data[(this.current_time+this.buffer_time+220).toFixed(1)]){
         // Calculate link speed
         const roadSpeed = new Map(linkdict);
         const roadCount = new Map(linkdict);
-        for ( let i = 0; i< this.state.data[(this.current_time+this.buffer_time).toFixed(1)].length; i++){
-          const record = this.state.data[(this.current_time+this.buffer_time).toFixed(1)][i]
+        for ( let i = 0; i< this.state.data[(this.current_time+this.buffer_time+220).toFixed(1)].length; i++){
+          const record = this.state.data[(this.current_time+this.buffer_time+220).toFixed(1)][i]
           const roadID = record[12];
           roadSpeed.set(roadID, roadSpeed.get(roadID)+record[5])
           roadCount.set(roadID, roadCount.get(roadID)+1)
@@ -344,7 +382,7 @@ class App extends Component{
             roadspeed: roadSpeed,
             roadcount: roadCount,
             vehicles2:
-                this.state.data[(this.current_time+this.buffer_time).toFixed(1)].map(d => ({
+                this.state.data[(this.current_time+this.buffer_time+220).toFixed(1)].map(d => ({
                   id: d[0],
                   lon: d[1],
                   lat: d[2],
@@ -368,7 +406,7 @@ class App extends Component{
             roadspeed: roadSpeed,
             roadcount: roadCount,
             vehicles1:
-                this.state.data[(this.current_time+this.buffer_time).toFixed(1)].map(d => ({
+                this.state.data[(this.current_time+this.buffer_time+220).toFixed(1)].map(d => ({
                   id: d[0],
                   lon: d[1],
                   lat: d[2],
@@ -388,7 +426,8 @@ class App extends Component{
         }
       }
       else{
-        this.restartAnimation();
+        console.log(this.last_time);
+        this.restartAnimation(); // Fail to load data, skip the current tick
       }
     }
   };
@@ -432,7 +471,6 @@ class App extends Component{
           this.setState({vehicles2});
         }
       }
-
     }
   }
 
@@ -464,7 +502,15 @@ class App extends Component{
     this.setState({x2:x, y2:y, hovered_link: object});
   }
 
+  _onSelectEventLink({object}) {
+    document.getElementsByName("select_link")[0].value = object.properties.ID;
+  }
 
+  _onHoverEventLink({x, y, object}) {
+    this.setState({x2:x, y2:y, hovered_link: object});
+  }
+
+  // Tooltip for vehicles
   _renderTooltip() {
     const {x, y, hovered_object} = this.state;
     return (
@@ -478,6 +524,8 @@ class App extends Component{
         )
     );
   }
+
+  // Tooltip for roads
   _renderTooltip2(){
     const { x2, y2, hovered_link, roadcount, roadspeed} = this.state;
     return (
@@ -493,27 +541,29 @@ class App extends Component{
   }
 
   render(){
-    let layers = [new IconLayer({
-      id: 'scatterplot-vehicles',
-      data: this.state.vehicles1,
-      visible: this.state.subswitch,
-      pickable: true,
-      onClick: this._onSelectVehicle,
-      onHover: this._onHoverVehicle,
-      iconAtlas: car2,
-      iconMapping:{
-        vehicle:{
-          x: 0,
-          y: 0,
-          width: 256,
-          height: 256
-        }
-      },
-      sizeScale: 20,
-      getPosition: d => [d.lon, d.lat],
-      getIcon: d => "vehicle",
-      getAngle: d => d.bearing-90,
-    }),new IconLayer({
+    let layers = [];
+    if(!this.state.synchronized){
+      layers.push([new IconLayer({
+        id: 'scatterplot-vehicles',
+        data: this.state.vehicles1,
+        visible: this.state.subswitch,
+        pickable: true,
+        onClick: this._onSelectVehicle,
+        onHover: this._onHoverVehicle,
+        iconAtlas: car2,
+        iconMapping:{
+          vehicle:{
+            x: 0,
+            y: 0,
+            width: 256,
+            height: 256
+          }
+        },
+        sizeScale: 20,
+        getPosition: d => [d.lon, d.lat],
+        getIcon: d => "vehicle",
+        getAngle: d => d.bearing-90,
+      }),new IconLayer({
       id: 'scatterplot-vehicles2',
       data: this.state.vehicles2,
       visible: 1-this.state.subswitch,
@@ -533,7 +583,8 @@ class App extends Component{
       getPosition: d => [d.lon, d.lat],
       getIcon: d => "vehicle",
       getAngle: d => d.bearing-90,
-    })];
+    })])
+    };
     // Optional layers
     if(this.state.settings.mode) {
       layers.unshift(new GeoJsonLayer({
@@ -592,6 +643,24 @@ class App extends Component{
         getPosition: d => [d.destx, d.desty],
         getIcon: d =>"dest_pin",
       })])
+    }
+    if(this.state.synchronized) {
+      layers.unshift(new GeoJsonLayer({
+        id: 'geojson-link2',
+        data: linkData,
+        opacity: 1,
+        lineWidthUnits: 'pixels',
+        lineWidthMinPixels: 0,
+        lineWidthMaxPixels: 6,
+        parameters: {
+          depthTest: false
+        },
+        pickable: true,
+        onClick: this._onSelectEventLink,
+        onHover: this._onHoverLink,
+        getLineColor: f => [200, 200, 200],
+        getLineWidth: f => 300,//(this.state.roadcount.get(f.properties.Id)==0)?0: 200
+      }))
     }
 
     return(
