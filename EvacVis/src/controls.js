@@ -9,6 +9,12 @@ export const TRIPS_CONTROLS = {
     type: 'boolean',
     value: false
   },
+  style: {
+    displayName: 'Display',
+    type: 'select',
+    value: 0,
+    optValue: [{label: "Vehicle Trajectory", value: 0},{label: "Vehicle HeatMap",value: 1}]
+  },
   play: {
     displayName: '',
     type: 'image',
@@ -131,9 +137,6 @@ export class LayerControls extends Component {
             />
           </div>
         ))}
-
-
-
       </div>
     );
   }
@@ -151,6 +154,9 @@ const Setting = props => {
 
       case 'image':
         return <ImageBtn {...props} />;
+
+      case 'select':
+        return <Selector {...props} />;
 
       default:
         return <input {...props} />;
@@ -210,3 +216,24 @@ const ImageBtn = ({ settingName, value, onChange }) => {
     </div>
   );
 };
+
+
+const Selector = ({ settingName, value, propType, onChange }) =>{
+  const {optValue} = propType;
+  return(
+      <div key={settingName} style={{clear:"both"}}>
+        <div className="input-group">
+          <select
+              value={value}
+              onChange={e => onChange(settingName, e.target.value)}
+          >
+            {optValue.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+            ))}
+          </select>
+        </div>
+      </div>
+  )
+}

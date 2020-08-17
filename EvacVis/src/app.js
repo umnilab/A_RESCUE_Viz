@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import DeckGL, {IconLayer, GeoJsonLayer} from 'deck.gl';
+import {HeatmapLayer} from '@deck.gl/aggregation-layers';
 import {StaticMap} from "react-map-gl";
 import * as d3 from "d3";
 
@@ -9,7 +10,8 @@ import {
 } from './controls';
 import {Panel} from "./panel";
 import {Legend} from "./legend";
-import {Client} from "./client";
+import {Client} from "./client"
+import Chart from "./chart";
 import {scaleThreshold} from 'd3-scale';
 
 import linkData from '../res/road.json';
@@ -18,6 +20,7 @@ import car2 from "../res/car2.png";
 import red_pin from "../res/pin_red.png";
 import blue_pin from "../res/pin_blue.png";
 
+// const { promisify } = require('util')
 
 const MAPBOX_ACCESS_TOKEN = "pk.eyJ1IjoibGVpemVuZ3hpYW5nIiwiYSI6ImNqNTM4NnV3YjA0Z2cyd3BnOXFuajg1YmoifQ.xC1N6Uxu4k-1LMjbSSM8NQ";
 
@@ -95,6 +98,9 @@ class App extends Component{
     super(props);
 
     this.state = {
+      plotdata: {hour:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+        counts:[1286, 1307, 1264, 1243, 1365, 1346, 1402, 290, 273, 310, 326, 320, 298, 306, 293, 294, 306, 310, 260, 482, 451, 417, 439, 411]},
+      plotdata2: {ticks:[], counts:[]},
       connected: false, // whether or not connect to the server
       synchronized: false, // false: asynchronized mode, loading data from the file directories, true: loading data directly from returned messages
       data_url: null,
@@ -140,8 +146,10 @@ class App extends Component{
   timer = null;
   time_step=40; // Ticks per file
   buffer_time = 20; // Buffer_time for loading new data
+  fail_count = 0; // Numbers of fails, if there are over 5 fails, restart the visualization, otherwise wait.
   currentFrame = null;
   framesPerTick = 60; //The maximum frame per tick
+
 
   // When open the webpage
   componentDidMount(){
@@ -159,7 +167,7 @@ class App extends Component{
   }
 
 
-  // Simulation control
+  // Client control
   connectServer(){
     const addr = "ws://" + document.getElementsByName("addr_txt")[0].value;
     console.log("Connecting to (" + addr + ")...");
@@ -235,7 +243,8 @@ class App extends Component{
           }
         }
         else {
-          // handle an unknown message type
+          // handle an unknown message type, display it
+          console.log(e);
         }
       }
     }
@@ -243,7 +252,7 @@ class App extends Component{
       console.log("Connection failed");
     }
   }
-
+  // Diconnect the server
   disConnectServer(){
     if(ws != null){
       ws.close();
@@ -253,6 +262,7 @@ class App extends Component{
     console.log("connection closed");
   }
 
+  // Enter the synchronized mode, when using synchronized mode, visualize the real-time using websocket
   synchronizeController(){
     if(ws != null){
       this.setState({synchronized: true});
@@ -263,6 +273,7 @@ class App extends Component{
     console.log("synchronized to instance");
   }
 
+  // Quit synchronized mode
   releaseController(){
     if(ws != null){
       this.setState({synchronized: false})
@@ -271,7 +282,7 @@ class App extends Component{
     console.log("desynchronized to instance");
   }
 
-
+  // Send text message through websocket
   sendMessage(){
     if(ws !=null){
       const msg = document.getElementsByName("send_txt")[0].value;
@@ -280,6 +291,7 @@ class App extends Component{
     }
   }
 
+  // Load maximal time returned from the server
   upDateMaximalTime(){
       const max_time = document.getElementsByName("max_time")[0].value;
       this.setState({maximal_time: max_time}, ()=>
@@ -298,6 +310,7 @@ class App extends Component{
     });
   }
 
+  // Called after sending "start" message to the server
   loadNow(dir){
     //console.log(dir);
     sleep(20000).then(()=>{
@@ -309,10 +322,12 @@ class App extends Component{
     });
   }
 
+  //  For controls.js
   updateConfigOptions(options){
     this.setState({options:options},()=>console.log(this.state.options))
   }
 
+  // Load Data from websocket
   updateCurrentTick(record){
     this.setState({currentData:record},()=>console.log(this.state.currentData))
   }
@@ -325,15 +340,15 @@ class App extends Component{
     this.last_time = this.current_time; // Update_time
     this.timer = null;
     this.currentFrame = null;
-    this.restartAnimation()
+    this.setState({plotdata2:{ticks:[], counts:[]}}, ()=>this.restartAnimation());
   }
 
-  // Core functions
+  // Core functions for visualizing trajectories
   restartAnimation(){
     if (this.timer) {
       this.timer.stop();
     }
-    d3.json(this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40 +1 )+".json").then(
+    d3.json(this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json").then(
         (new_data) => this.setState({subdata: new_data, subswitch: 0, data: []},
             () => {
               this.fetchData(this.last_time+this.time_step);
@@ -350,6 +365,9 @@ class App extends Component{
       if(this.last_time > this.state.maximal_time){
         //Alert the user here.
         Console.log("Boundary reached")
+        if(this.timer){
+          this.timer.stop();
+        }
       }
       this.startAnimation();
       d3.json(this.state.data_url+"/"+this.state.prefix+"."+((current_time)/40+1)+".json").then(
@@ -358,18 +376,21 @@ class App extends Component{
     });
   };
 
+  // Vehicle location, use intercept to reduce the network load
   startAnimation = () => {
-    if(this.current_time >= (this.last_time)) { // This piece does not work at all...
+    if(this.current_time >= (this.last_time)) {
+      console.log("Piece 1 take care of this update.");
+      console.log(this.current_time)
       this.fetchData(this.last_time+this.time_step);
     }
     else{
-      //console.log(this.state.data[(this.current_time).toFixed(1)])
-      if(this.state.data[(this.current_time+this.buffer_time+220).toFixed(1)]){
+      // console.log(this.state.data)
+      if(this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)]){
         // Calculate link speed
         const roadSpeed = new Map(linkdict);
         const roadCount = new Map(linkdict);
-        for ( let i = 0; i< this.state.data[(this.current_time+this.buffer_time+220).toFixed(1)].length; i++){
-          const record = this.state.data[(this.current_time+this.buffer_time+220).toFixed(1)][i]
+        for ( let i = 0; i< this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)].length; i++){
+          const record = this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)][i]
           const roadID = record[12];
           roadSpeed.set(roadID, roadSpeed.get(roadID)+record[5])
           roadCount.set(roadID, roadCount.get(roadID)+1)
@@ -377,12 +398,13 @@ class App extends Component{
         // Create special layer for selected vehicle
         // Calculate vehicle location
         if(this.state.subswitch) {
+          this.fail_count=0; // refresh the fail count
           this.setState({
             subswitch: 1 - this.state.subswitch,
             roadspeed: roadSpeed,
             roadcount: roadCount,
             vehicles2:
-                this.state.data[(this.current_time+this.buffer_time+220).toFixed(1)].map(d => ({
+                this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)].map(d => ({
                   id: d[0],
                   lon: d[1],
                   lat: d[2],
@@ -396,17 +418,20 @@ class App extends Component{
                   interpolatePos: d3.geoInterpolate([d[1], d[2]], [d[3], d[4]])
                 }))
           }, () => {
+            this.state.plotdata2.ticks.push(this.current_time);
+            this.state.plotdata2.counts.push(this.state.vehicles2.length);
             this.current_time += this.buffer_time;
             this.currentFrame = 0;
             this.timer = d3.timer(this.animationFrame);
           })
         }
         else{
-          this.setState({subswitch: 1-this.state.subswitch,
+          this.setState({
+            subswitch: 1-this.state.subswitch,
             roadspeed: roadSpeed,
             roadcount: roadCount,
             vehicles1:
-                this.state.data[(this.current_time+this.buffer_time+220).toFixed(1)].map(d => ({
+                this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)].map(d => ({
                   id: d[0],
                   lon: d[1],
                   lat: d[2],
@@ -419,6 +444,8 @@ class App extends Component{
                   bearing: getDirection(d[1], d[2], d[3], d[4]),
                   interpolatePos: d3.geoInterpolate([d[1], d[2]], [d[3], d[4]])
                 }))}, ()=> {
+            this.state.plotdata2.ticks.push(this.current_time);
+            this.state.plotdata2.counts.push(this.state.vehicles1.length);
             this.current_time += this.buffer_time;
             this.currentFrame = 0;
             this.timer = d3.timer(this.animationFrame);
@@ -426,8 +453,18 @@ class App extends Component{
         }
       }
       else{
-        console.log(this.last_time);
-        this.restartAnimation(); // Fail to load data, skip the current tick
+        // The internet speed does not support this visualization speed, let's make the speed lower and reload the visualization
+        this.fail_count+=1
+        console.log("Piece 2 take care of this update.");
+        console.log(this.current_time)
+        if(this.fail_count>5) {
+          this.fail_count=0;
+          this.restartAnimation(); // Fail to load data, skip the current tick
+        }else{
+          sleep(500).then(() => {
+            this.startAnimation();
+          })
+        }
       }
     }
   };
@@ -503,7 +540,7 @@ class App extends Component{
   }
 
   _onSelectEventLink({object}) {
-    document.getElementsByName("select_link")[0].value = object.properties.ID;
+    document.getElementsByName("select_link")[0].value = object.properties.Id;
   }
 
   _onHoverEventLink({x, y, object}) {
@@ -542,73 +579,98 @@ class App extends Component{
 
   render(){
     let layers = [];
-    if(!this.state.synchronized){
-      layers.push([new IconLayer({
-        id: 'scatterplot-vehicles',
-        data: this.state.vehicles1,
-        visible: this.state.subswitch,
-        pickable: true,
-        onClick: this._onSelectVehicle,
-        onHover: this._onHoverVehicle,
-        iconAtlas: car2,
-        iconMapping:{
-          vehicle:{
-            x: 0,
-            y: 0,
-            width: 256,
-            height: 256
+    if(!this.state.synchronized) {
+      if (this.state.settings.style==1) {
+        layers.push([new HeatmapLayer({
+          id: 'heatmap-vehicles',
+          data: this.state.vehicles1,
+          visible: this.state.subswitch,
+          pickable: false,
+          getPosition: d => [d.lon, d.lat],
+          getWeight: 1,
+          radiusPixels: 20,
+          intensity: 2,
+          threshold: 0.1
+        }),new HeatmapLayer({
+          id: 'heatmap-vehicles2',
+          data: this.state.vehicles2,
+          visible: 1-this.state.subswitch,
+          pickable: false,
+          getPosition: d => [d.lon, d.lat],
+          getWeight: 1,
+          radiusPixels: 20,
+          intensity: 2,
+          threshold: 0.1
+        })]);
+      } else{
+        layers.push([new IconLayer({
+          id: 'scatterplot-vehicles',
+          data: this.state.vehicles1,
+          visible: this.state.subswitch,
+          pickable: true,
+          onClick: this._onSelectVehicle,
+          onHover: this._onHoverVehicle,
+          iconAtlas: car2,
+          iconMapping:{
+            vehicle:{
+              x: 0,
+              y: 0,
+              width: 256,
+              height: 256
+            }
+          },
+          sizeScale: 20,
+          getPosition: d => [d.lon, d.lat],
+          getIcon: d => "vehicle",
+          getAngle: d => d.bearing-90,
+        }),new IconLayer({
+          id: 'scatterplot-vehicles2',
+          data: this.state.vehicles2,
+          visible: 1-this.state.subswitch,
+          pickable: true,
+          onClick: this._onSelectVehicle,
+          onHover: this._onHoverVehicle,
+          iconAtlas: car2,
+          iconMapping:{
+            vehicle:{
+              x: 0,
+              y: 0,
+              width: 256,
+              height: 256
+            }
+          },
+          sizeScale: 20,
+          getPosition: d => [d.lon, d.lat],
+          getIcon: d => "vehicle",
+          getAngle: d => d.bearing-90,
+        })])
+      }};
+
+      // Optional layers
+      if(this.state.settings.mode) {
+        layers.unshift(new GeoJsonLayer({
+          id: 'geojson-link',
+          data: linkData,
+          opacity: 1,
+          lineWidthUnits: 'pixels',
+          lineWidthMinPixels: 0,
+          lineWidthMaxPixels: 6,
+          parameters: {
+            depthTest: false
+          },
+          pickable: true,
+          onClick: this._onSelectLink,
+          onHover: this._onHoverLink,
+          getLineColor: f => COLOR_SCALE((this.state.roadcount.get(f.properties.Id)==0)?40:
+              (this.state.roadspeed.get(f.properties.Id)*3.6/(this.state.roadcount.get(f.properties.Id)))),
+          getLineWidth: f => 200,//(this.state.roadcount.get(f.properties.Id)==0)?0: 200,
+          updateTriggers: {
+            getLineColor: this.current_time,
+            getLineWidth: this.current_time
           }
-        },
-        sizeScale: 20,
-        getPosition: d => [d.lon, d.lat],
-        getIcon: d => "vehicle",
-        getAngle: d => d.bearing-90,
-      }),new IconLayer({
-      id: 'scatterplot-vehicles2',
-      data: this.state.vehicles2,
-      visible: 1-this.state.subswitch,
-      pickable: true,
-      onClick: this._onSelectVehicle,
-      onHover: this._onHoverVehicle,
-      iconAtlas: car2,
-      iconMapping:{
-        vehicle:{
-          x: 0,
-          y: 0,
-          width: 256,
-          height: 256
-        }
-      },
-      sizeScale: 20,
-      getPosition: d => [d.lon, d.lat],
-      getIcon: d => "vehicle",
-      getAngle: d => d.bearing-90,
-    })])
-    };
-    // Optional layers
-    if(this.state.settings.mode) {
-      layers.unshift(new GeoJsonLayer({
-        id: 'geojson-link',
-        data: linkData,
-        opacity: 1,
-        lineWidthUnits: 'pixels',
-        lineWidthMinPixels: 0,
-        lineWidthMaxPixels: 6,
-        parameters: {
-          depthTest: false
-        },
-        pickable: true,
-        onClick: this._onSelectLink,
-        onHover: this._onHoverLink,
-        getLineColor: f => COLOR_SCALE((this.state.roadcount.get(f.properties.Id)==0)?40:
-            (this.state.roadspeed.get(f.properties.Id)*3.6/(this.state.roadcount.get(f.properties.Id)))),
-        getLineWidth: f => 200,//(this.state.roadcount.get(f.properties.Id)==0)?0: 200,
-        updateTriggers: {
-          getLineColor: this.current_time,
-          getLineWidth: this.current_time
-        }
-      }))
-    }
+        }))
+      }
+
     if(this.state.selected_vehicle){
       layers.push([new IconLayer({
         id: 'scatterplot-origin',
@@ -685,6 +747,7 @@ class App extends Component{
           <Panel {...this.state} />
           <Legend {...this.state} />
           <Client {...this.state} />
+          <Chart {...this.state} />
         </div>
     );
   }

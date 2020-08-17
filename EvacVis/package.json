@@ -1,24 +1,22 @@
 {
   "name": "evacvis",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "https://engineering.purdue.edu/HSEES/EvacVis/",
   "scripts": {
     "start": "webpack-dev-server --progress --hot --open",
     "build": "webpack  --config ./webpack.config.js"
   },
   "dependencies": {
-    "d3": "^5.9.2",
+    "d3": "^5.16.0",
     "d3-svg-legend": "^2.25.6",
-    "deck.gl": "^6.2.4",
+    "deck.gl": "^8.1.0",
+    "@deck.gl/aggregation-layers": "^8.1.0",
     "jquery-csv": "^0.8.12",
     "luma.gl": "^6.2.0",
-    "netlify-cli": "^2.11.19",
-    "react": "^16.6.1",
-    "react-dom": "^16.6.1",
-    "react-key-handler": "^1.2.0-beta.3",
-    "react-map-gl": "^4.0.0",
-    "react-vis": "^1.11.4",
-    "reactjs-popup": "^1.5.0"
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-map-gl": "^5.0.0",
+    "react-vis": "^1.11.4"
   },
   "babel": {
     "presets": [

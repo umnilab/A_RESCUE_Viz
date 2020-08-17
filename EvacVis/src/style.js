@@ -38,12 +38,12 @@ export const charts = {
   fontFamily: 'ff-clan-web-pro, "Helvetica Neue", Helvetica, sans-serif !important',
   fontSize: '12px',
   lineHeight: 1.833,
-  height: 240,
+  height: 200,
+  width: 400,
   padding: '10px',
   position: 'absolute',
-  left: 20,
-  bottom: 20,
-  width: 400,
+  right: '5px',
+  bottom: 5,
   zIndex: 100
 };
 
@@ -91,9 +91,10 @@ export const legend = {
   padding: '10px',
   position: 'absolute',
   right: '5px',
-  bottom: 25,
+  bottom: 250,
   zIndex: 100
 };
+
 
 export const clientControl = {
   background: 'transparent',
