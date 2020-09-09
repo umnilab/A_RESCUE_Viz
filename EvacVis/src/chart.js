@@ -18,7 +18,8 @@ export default function Chart({plotdata, plotdata2}) {
     console.log(data)
 
     return (
-            <div style={charts}>
+            <div className="chart-panel card">
+                <div className="card-body">
                 {/*<h2>Demand per hour</h2>*/}
                 {/*<XYPlot*/}
                 {/*    margin={{ left: 40, right: 25, top: 10, bottom: 25 }}*/}
@@ -54,6 +55,7 @@ export default function Chart({plotdata, plotdata2}) {
                     />
                     <XAxis title="Ticks"/>
                 </XYPlot>
+                </div>
             </div>
         );
 }

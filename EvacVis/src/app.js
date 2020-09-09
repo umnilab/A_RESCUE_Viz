@@ -725,29 +725,40 @@ class App extends Component{
       }))
     }
 
+    let staticMap;
+    staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}/>;
+    /*if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN} mapStyle="mapbox://styles/mapbox/dark-v9"/>;
+    } else {
+      staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}/>;
+    }*/
+
     return(
-        <div>
-          <LayerControls
-              settings={this.state.settings}
-              propTypes={TRIPS_CONTROLS}
-              onChange={settings => this._updateLayerSettings(settings)}
-              currentTime={Math.ceil((this.current_time+ this.buffer_time*this.currentFrame/ (this.framesPerTick-this.state.settings.speed)))}
-              resetCurrentTime = {this.resetCurrentTime}
-          />
+        <div className="app-body">
           <DeckGL
               initialViewState={initialViewState}
               controller={true}
               layers={layers}
               onViewStateChange={this._onViewStateChange}
           >
-            <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}/>
+            {staticMap}
             {this._renderTooltip}
             {this._renderTooltip2}
           </DeckGL>
-          <Panel {...this.state} />
-          <Legend {...this.state} />
-          <Client {...this.state} />
-          <Chart {...this.state} />
+          <div className="app-controls">
+            <Client {...this.state} />
+            <LayerControls
+                title="Options"
+                settings={this.state.settings}
+                propTypes={TRIPS_CONTROLS}
+                onChange={settings => this._updateLayerSettings(settings)}
+                currentTime={Math.ceil((this.current_time+ this.buffer_time*this.currentFrame/ (this.framesPerTick-this.state.settings.speed)))}
+                resetCurrentTime = {this.resetCurrentTime}
+            />
+            <Panel {...this.state} />
+            <Chart {...this.state} />
+            </div>
+            <Legend {...this.state} />
         </div>
     );
   }
