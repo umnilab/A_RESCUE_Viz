@@ -1,7 +1,7 @@
 import {legend} from "./style";
 import React, { Component } from 'react';
 import * as d3 from "d3";
-import { legendColor } from 'd3-svg-legend'
+import { legendColor } from 'd3-svg-legend';
 
 
 export class Legend extends Component{
@@ -10,7 +10,7 @@ export class Legend extends Component{
             .domain(["<10", "[10,20)", "[20,30)", ">=30"])
             .range([ "rgb(211, 0, 0)", "rgb(211, 84, 0)", "rgb(247, 210, 76)", "rgb(112, 247, 76)"]);
 
-        var svg = d3.select("svg");
+        var svg = d3.select("svg#map-legend");
 
         svg.append("g")
             .attr("class", "legendOrdinal");
@@ -30,12 +30,10 @@ export class Legend extends Component{
             .call(legendOrdinal);
 
         return(
-            <div className="legend-panel card">
-                <div className="card-body">
-                Legend (km/h)
-                <svg height="25" width="350" id="svg-color-oridnal">
-                </svg>
-                </div>
+            <div className="legend-panel">
+                    Legend (km/h)
+                    <svg height="25" width="350" id="map-legend">
+                    </svg>
             </div>
         );}
 }

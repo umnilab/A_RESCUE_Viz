@@ -7,7 +7,7 @@ export class Client extends Component{
         super(props);
         this.state = {
             address: "tnet1.ecn.purdue.edu:47906",
-            hist_addr:"https://engineering.purdue.edu/HSEES/test/instance_0/",
+            hist_addr:"http://localhost:8080/test_data/", //"https://engineering.purdue.edu/HSEES/test/instance_0/",
             message: "",
             max_tick: 10
         }
@@ -231,33 +231,74 @@ export class Client extends Component{
             if (synchronized) {
                 return(
                     <div className="connection-controls card connected synchronized">
+                        <div className="card-header">
+                            <div className="row">
+                                <div className="col-md-6">
+                                    <span className="sr-only">Status: </span>
+                                    <span className="status status-success">Connected</span>
+                                </div>
+                                <div className="col-md-6 text-right">
+                                    <button className="btn btn-sm btn-danger" onClick={disConnectServer}>Disconnect</button>
+                                </div>
+                            </div>
+                        </div>
                         <div className="card-body">
                             <form name="template_form">
-                                Selected link: <input type="text" className="form-control" name="select_link" style={{width: '50px'}} disabled="disabled"/>
-                                <input type="button" name="event_btn" disabled={false} value="Event"
-                                       onClick={this.toggleEventDialog} style={{width: '80px'}}/><br/>
-                                <input type="button" name="desynchronize_btn" disabled={false} value="Desynchronize"
-                                       onClick={releaseController} style={{width: '120px'}}/>
+                                <div className="form-group">
+                                    <div className="input-group">
+                                        <label className="input-group-prepend"><span className="input-group-text">Selected link:</span></label>
+                                        <input type="text" className="form-control" name="select_link" disabled="disabled"/>
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <div className="row">
+                                        <div className="col-md-6">
+                                            <div className="btn-group">
+                                                <input type="button" name="event_btn" className="btn btn-secondary" disabled={false} value="Event"
+                                                        onClick={this.toggleEventDialog} />
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6 text-right">
+                                            <input type="button" name="desynchronize_btn" className="btn btn-secondary" disabled={false} value="Desynchronize"
+                                                    onClick={releaseController} />
+                                        </div>
+                                    </div>
+                                </div>
                             </form>
-                            <div>
-                                <textarea name="send_txt" onChange={this.upDateMess}/>
-                                <input type="button" name="send_btn" value="Send"
+                            <div className="form-group">
+                                <textarea name="send_txt" className="form-control" onChange={this.upDateMess}/>
+                                <input type="button" name="send_btn" className="btn btn-secondary" value="Send"
                                        onClick={sendMessage}/>
                             </div>
-                            <div> Status: <b style={{color: "green"}}>Connected.</b> <u
-                                onClick={disConnectServer}>(Disconnect)</u></div>
-                            <div style={{float:"left"}}>
-                                Simulation time: <input type="text" className="form-control" name="max_time" style={{width: '50px'}} disabled="disabled"/>
+                            <div className="form-group">
+                                <div className="input-group">
+                                    <label className="input-group-prepend"><span className="input-group-text">Simulation time:</span></label>
+                                    <input type="text" className="form-control" name="max_time" disabled="disabled"/>
+                                </div>
                             </div>
+
                             <dialog name="event_dialog" style={{display: "none"}}>
                                 <p><strong><em>Configure the event here:</em></strong></p>
-                                <p>Start Time: <input type="text" className="form-control" name="start_time" style={{width: '200px'}}/></p>
-                                <p>End Time: <input type="text" className="form-control" name="end_time" style={{width: '200px'}}/></p>
-                                <p>Value 1: <input type="text" className="form-control" name="value1" style={{width: '250px'}}/></p>
-                                <p>Value 2: <input type="text" className="form-control" name="value2" style={{width: '250px'}}/></p>
-                                <br/>
-                                <input type="button" name="set_event" value="Accept" onClick={this.processEventDialog}/>
-                                <input type="button" name="cancel_event" value="Cancel" onClick={this.toggleEventDialog}/>
+                                <div className="form-group">
+                                    <label className="start_time">Start Time:</label>
+                                    <input type="text" className="form-control" name="start_time" id="start_time"/>
+                                </div>
+                                <div className="form-group">
+                                    <label className="end_time">End Time:</label>
+                                    <input type="text" className="form-control" name="end_time" id="end_time"/>
+                                </div>
+                                <div className="form-group">
+                                    <label className="value1">Value 1:</label>
+                                    <input type="text" className="form-control" name="value1" id="value1"/>
+                                </div>
+                                <div className="form-group">
+                                    <label className="value2">Value 2:</label>
+                                    <input type="text" className="form-control" name="value2" id="value2"/>
+                                </div>
+                                <div className="form-group">
+                                    <input type="button" className="btn btn-primary" name="set_event" value="Accept" onClick={this.processEventDialog}/>
+                                    <input type="button" className="btn btn-link" name="cancel_event" value="Cancel" onClick={this.toggleEventDialog}/>
+                                </div>
                             </dialog>
                         </div>
                     </div>
@@ -279,19 +320,24 @@ export class Client extends Component{
                         </div>
                         <div className="card-body">
                             <form name="template_form">
-                            <div className="form-group">
-                            <div className="btn-group">
-                                <input type="button" name="create_btn" className="btn btn-outline-secondary" disabled={false} value="Create"
-                                       onClick={this.fillMesageCreate} />
-                                <input type="button" name="config_btn" className="btn btn-outline-secondary" disabled={false} value="Config"
-                                       onClick={this.toggleConfigDialog} />
-                                <input type="button" name="start_btn" className="btn btn-outline-secondary" disabled={false} value="Start"
-                                       onClick={this.fillMessageStart} />
-                            </div>
-                                <input type="button" name="synchronize_btn" className="btn btn-outline-secondary" disabled={false} value="Synchronize"
-                                       onClick={synchronizeController} />
-
-                            </div>
+                                <div className="form-group">
+                                    <div className="row">
+                                        <div className="col-md-7">
+                                            <div className="btn-group">
+                                                <input type="button" name="create_btn" className="btn btn-secondary" disabled={false} value="Create"
+                                                       onClick={this.fillMesageCreate} />
+                                                <input type="button" name="config_btn" className="btn btn-secondary" disabled={false} value="Config"
+                                                       onClick={this.toggleConfigDialog} />
+                                                <input type="button" name="start_btn" className="btn btn-secondary" disabled={false} value="Start"
+                                                       onClick={this.fillMessageStart} />
+                                            </div>
+                                        </div>
+                                        <div className="col-md-5 text-right">
+                                            <input type="button" name="synchronize_btn" className="btn btn-secondary" disabled={false} value="Synchronize"
+                                                   onClick={synchronizeController} />
+                                        </div>
+                                    </div>
+                                </div>
                             </form>
                             <div className="form-group">
                                 <label className="sr-only" htmlFor="send_txt">Message</label>
@@ -300,26 +346,39 @@ export class Client extends Component{
                                        onClick={sendMessage}/>
                             </div>
                             <div className="form-group">
-                                <div class="input-group">
-                                    <label className="input-group-prepend"><span class="input-group-text">Simulation time:</span></label>
+                                <div className="input-group">
+                                    <label className="input-group-prepend"><span className="input-group-text">Simulation time:</span></label>
                                     <input type="text" className="form-control" name="max_time" disabled="disabled"/>
                                 </div>
                             </div>
                             <dialog name="config_dialog" style={{display: "none"}}>
                                 <p><strong><em>Configure the parameters of the simulation here:</em></strong></p>
-                                <p>Name: <input type="text" className="form-control" name="config_name" style={{width: '250px'}}/></p>
-                                <p>Demand File: <select name="config_demand"
-                                                        style={{width: '200px'}}/></p>
-                                <p>Event File: <select name="config_event" className="form-control" style={{width: '250px'}}/></p>
-                                <p>Routing Algorithm: <select name="config_routing" className="form-control" style={{width: '100px'}}/></p>
-                                <p>Simulation Length: <input type="range" name="config_ticks" min="1" max="10" step="1"
-                                                             style={{width: '175px'}}
+                                <div className="form-group">
+                                    <label htmlFor="config_name">Name:</label>
+                                    <input type="text" className="form-control" name="config_name" id="config_name" />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="config_demand">Demand File:</label>
+                                    <select className="form-control" name="config_demand" id="config_demand"></select>
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="config_event">Event File:</label>
+                                    <select className="form-control" name="config_event" id="config_event"></select>
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="config_routing">Routing Algorithm:</label>
+                                    <select className="form-control" name="config_routing" id="config_routing"></select>
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="config_ticks">Simulation Length:</label>
+                                    <input type="range" name="config_ticks" id="config_ticks" min="1" max="10" step="1"
                                                              onChange={
                                                                  e => this.setState({max_tick: e.target.value}, ()=> console.log(this.state.max_tick))}/>
-                                    &nbsp; <span name="tick_value">{max_tick}</span></p>
+                                    &nbsp; <span name="tick_value">{max_tick}</span>
+                                </div>
                                 <br/>
-                                <input type="button" name="set_config" value="Accept" onClick={this.processConfigDialog}/>
-                                <input type="button" name="cancel_config" value="Cancel" onClick={this.toggleConfigDialog}/>
+                                <input type="button" className="btn btn-primary" name="set_config" value="Accept" onClick={this.processConfigDialog}/>
+                                <input type="button" className="btn btn-outline-secondary" name="cancel_config" value="Cancel" onClick={this.toggleConfigDialog}/>
                             </dialog>
                         </div>
                     </div>
@@ -345,10 +404,10 @@ export class Client extends Component{
                             <label htmlFor="hist_txt">History</label>
                             <div className="input-group">
                                 <input type="text" className="form-control" name="hist_txt" id="hist_txt" value={hist_addr} onChange={this.upDateHist}/>
-                                <span className="input-group-append"><input type="button" className="btn btn-secondary" name="load_his" value="Load"
-                                       onClick={loadHistory}/></span>
+                                <span className="input-group-append"><button className="btn btn-secondary" name="load_his" value="Load"
+                                       onClick={loadHistory}><span className="spinner spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Load</button></span>
                             </div>
-                        </div>  
+                        </div>
                     </div>
                 </div>
             );

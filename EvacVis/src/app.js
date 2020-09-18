@@ -11,14 +11,15 @@ import {
 import {Panel} from "./panel";
 import {Legend} from "./legend";
 import {Client} from "./client"
-import Chart from "./chart";
+import {Chart} from "./chart";
+import Toast from "./toast";
 import {scaleThreshold} from 'd3-scale';
 
 import linkData from '../res/road.json';
 import car1 from "../res/car1.png";
 import car2 from "../res/car2.png";
-import red_pin from "../res/pin_red.png";
-import blue_pin from "../res/pin_blue.png";
+import red_pin from "../res/pin_red.svg";
+import blue_pin from "../res/pin_blue.svg";
 
 // const { promisify } = require('util')
 
@@ -71,14 +72,19 @@ function sleep(ms) {
 
 // load directories in the historical folder
 function loadHistories(my_url){
-  var result = null;
+  var result = [];
   $.ajax({
     url: my_url,
     type: 'get',
     dataType: 'html',
     async: false,
     success: function(data) {
-      result =  parseDirectoryListing(data);
+      if (data !== null) {
+        result = parseDirectoryListing(data);
+      }
+    },
+    failure: function(response) {
+      throw new 'Failed to load ';
     }
   });
   return result;
@@ -86,9 +92,19 @@ function loadHistories(my_url){
 
 function parseDirectoryListing(text)
 {
+  if (text === null) {
+    return [];
+  }
   let docs = text
-      .match(/href="([\w-]+)/g) // pull out the hrefs
-      .map((x) => x.replace('href="', '')); // clean up
+      //.match(/href="([\w-]+)/g) // pull out the hrefs
+      .match(/href="([^"]+)\.json/g)
+      .map((x) => {
+        x = x.replace('href="', '')
+          .replace('"', '')
+          .replace(/^([^\.]+)(\..*)/, '$1')
+          .split('/');
+        return x[x.length - 1];
+      }); // clean up
   console.log(docs);
   return docs;
 }
@@ -100,9 +116,10 @@ class App extends Component{
     this.state = {
       plotdata: {hour:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
         counts:[1286, 1307, 1264, 1243, 1365, 1346, 1402, 290, 273, 310, 326, 320, 298, 306, 293, 294, 306, 310, 260, 482, 451, 417, 439, 411]},
-      plotdata2: {ticks:[], counts:[]},
+      plotdata2: {ticks:[0], counts:[0]},
       connected: false, // whether or not connect to the server
       synchronized: false, // false: asynchronized mode, loading data from the file directories, true: loading data directly from returned messages
+      loaded: false,
       data_url: null,
       prefix: null,
       data: [], //current data
@@ -300,9 +317,12 @@ class App extends Component{
 
   // Visualization control
   loadHistory(){
-    //console.log(dir);
     let dir = document.getElementsByName("hist_txt")[0].value;
-    let file_names = loadHistories(document.getElementsByName("hist_txt")[0].value);
+    console.log(dir);
+    let file_names = loadHistories(dir);
+    if (file_names.length) {
+      this.setState({loaded: true});
+    }
     sleep(1000).then(()=>{
       console.log(file_names);
       this.setState({data_url: dir, prefix: file_names[0]}, ()=>
@@ -347,7 +367,7 @@ class App extends Component{
   restartAnimation(){
     if (this.timer) {
       this.timer.stop();
-    }
+    }console.log(this.state.data_url+"/"+this.state.prefix);
     d3.json(this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json").then(
         (new_data) => this.setState({subdata: new_data, subswitch: 0, data: []},
             () => {
@@ -553,7 +573,7 @@ class App extends Component{
     return (
         // if hoveredObject is null, then the rest part won't be execute
         hovered_object && (
-            <div className="tooltip" style={{top: y, left: x}}>
+            <div className="tooltipp" style={{top: y, left: x}}>
               <div> Vehicle id: {hovered_object.id} </div>
               <div> Speed: {(hovered_object.speed*3.6).toFixed(2)} km/h</div>
               <div> Type: {hovered_object.type} </div>
@@ -568,7 +588,7 @@ class App extends Component{
     return (
         // if hoveredObject is null, then the rest part won't be execute
         hovered_link && (
-            <div className="tooltip" style={{top: y2, left: x2}}>
+            <div className="tooltipp" style={{top: y2, left: x2}}>
               <div> Link id: {hovered_link.properties.Id} </div>
               <div> Average Speed: {(roadcount.get(hovered_link.properties.Id)==0)?-1:
                   (roadspeed.get(hovered_link.properties.Id)*3.6/(roadcount.get(hovered_link.properties.Id))).toFixed(2)} km/h</div>
@@ -647,7 +667,7 @@ class App extends Component{
       }};
 
       // Optional layers
-      if(this.state.settings.mode) {
+      if (this.state.settings.mode) {
         layers.unshift(new GeoJsonLayer({
           id: 'geojson-link',
           data: linkData,
@@ -671,7 +691,7 @@ class App extends Component{
         }))
       }
 
-    if(this.state.selected_vehicle){
+    if (this.state.selected_vehicle){
       layers.push([new IconLayer({
         id: 'scatterplot-origin',
         data: [this.state.selected_vehicle],
@@ -732,9 +752,11 @@ class App extends Component{
     } else {
       staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}/>;
     }*/
+    let className = this.state.loaded ? 'app-body loaded' : 'app-body';
+    const list = [];
 
     return(
-        <div className="app-body">
+        <div className={className}>
           <DeckGL
               initialViewState={initialViewState}
               controller={true}
@@ -745,7 +767,16 @@ class App extends Component{
             {this._renderTooltip}
             {this._renderTooltip2}
           </DeckGL>
-          <div className="app-controls">
+          <div className="app-pane app-controls">
+            {/*<ul className="nav nav-tabs" id="app-tab">
+              <li className="nav-item" role="presentation">
+                <a className="nav-link active" href="#layer-controls">Options</a>
+              </li>
+              <li className="nav-item" role="presentation">
+                <a className="nav-link" href="#statistics">Statistics</a>
+              </li>
+            </ul>*/}
+            <div className="tab-content" id="app-tabContent">
             <Client {...this.state} />
             <LayerControls
                 title="Options"
@@ -755,10 +786,21 @@ class App extends Component{
                 currentTime={Math.ceil((this.current_time+ this.buffer_time*this.currentFrame/ (this.framesPerTick-this.state.settings.speed)))}
                 resetCurrentTime = {this.resetCurrentTime}
             />
-            <Panel {...this.state} />
-            <Chart {...this.state} />
             </div>
-            <Legend {...this.state} />
+          </div>
+          <div className="app-pane app-options">
+            <Panel {...this.state} />
+          </div>
+          <div className="app-pane app-plots">
+            <Chart {...this.state} />
+          </div>
+          <Legend {...this.state} />
+          <Toast
+            toastList={list}
+            position="top-right"
+            autoDelete={false}
+            autoDeleteTime="3000"
+          />
         </div>
     );
   }

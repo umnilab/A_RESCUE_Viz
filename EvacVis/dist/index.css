@@ -1,24 +1,3 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<!-- Metadata -->
-		<meta charset="UTF-8" />
-		<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-		<meta name="description" content="Evacuation Visualizer" />
-		<meta name="keywords" content="EvacVis, evacuation" />
-
-		<title>EvacVis</title>
-
-		<!-- Styles -->
-		<!-- <link rel="stylesheet" type="text/css" href="https://unpkg.com/react-vis@1.5.0/dist/style.css" />
-		<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous"/>
-		<link rel="stylesheet" type="text/css" href="/index.css" /> -->
-		<link rel="stylesheet" type="text/css" href="bootstrap.min.css" />
-		<link rel="stylesheet" type="text/css" href="react-vis.css" />
-		<style>
 :root {
 	/*--blue: #007bff;
 	--indigo: #6610f2;
@@ -107,19 +86,17 @@ select.form-control {
 	background-color: var(--panel);
 }
 
-.tooltipp {
+.tooltip {
 	pointer-events: none;
 	position: absolute;
 	z-index: 9;
-	font-size: 0.875rem;
-	padding: 1em;
-	background: rgba(0, 0, 0, 0.9);
-	box-shadow: 0 .5em 1em -.125em rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.02);
+	font-size: 12px;
+	padding: 8px;
+	background: #000;
 	color: #fff;
 	min-width: 160px;
 	max-height: 240px;
 	overflow-y: hidden;
-	border-radius: 0.24rem;
 }
 
 .card {
@@ -202,9 +179,6 @@ select.form-control {
 	.card-body {
 		padding: 2em;
 	}
-	.collapsed .info-group {
-		display: none;
-	}
 }
 
 .form-group .badge {
@@ -219,7 +193,7 @@ select.form-control {
 	right: 20px;
 	width: 210px;
 	font-size: 0.85em;
-	text-align: center;
+	text-align: right;
 }
 .card-title {
 	font-size: 0.8rem;
@@ -396,26 +370,16 @@ select.form-control,
 	font-size: .875rem;
 	line-height: 1.5;
 	border-radius:.2rem;
-}
-.info-panel .card-title {
-	display: none;
 }*/
+
 .info-group {
-	margin-top: 2em;
-	font-size: 0.875rem;
-	border-radius: 0.25rem;
-	/*background-color: #f9f9f9;*/
+	border-radius: 0.24rem;
 	border: 1px solid var(--input-border);
+	margin-top: 2em;
 }
 .info-group .row {
-	line-height: 1;
-	padding-top: 0.5em;
-	padding-bottom: 0.5em;
+	line-height: 2em;
 	border-top: 1px solid var(--input-border);
-}
-.info-group .row>div {
-	padding-left: 0.75em;
-	padding-right: 0.75em;
 }
 .info-group .row:first-child {
 	border-top: none;
@@ -650,15 +614,3 @@ select.form-control,
 	}
 	*/
 }
-		</style>
-
-		<!-- Scripts -->
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-	</head>
-	<body>
-		<noscript class="alert alert-warning">This application requires JavaScript to function.</noscript>
-
-		<div id="root"></div>
-		<script type="text/javascript" src="/HSEES_Viz/EvacVis/index.js"></script>
-	</body>
-</html>
