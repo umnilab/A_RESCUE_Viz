@@ -18,8 +18,8 @@ import {scaleThreshold} from 'd3-scale';
 import linkData from '../res/road.json';
 import car4 from "../res/car4.png";
 import car2 from "../res/car2.png";
-import red_pin from "../res/pin_red.svg";
-import blue_pin from "../res/pin_blue.svg";
+import PinOrigin from "!file-loader!../res/pin_red.svg";
+import PinDestination from "!file-loader!../res/pin_blue.svg";
 
 // const { promisify } = require('util')
 
@@ -123,6 +123,7 @@ class App extends Component{
       loaded: false, // whether or not history is loaded
       data_url: null,
       prefix: null,
+      theme: 'light',
       messages: [],
       data: [], //current data
       subdata: [], //new data
@@ -767,7 +768,7 @@ class App extends Component{
       layers.push([new IconLayer({
         id: 'scatterplot-origin',
         data: [this.state.selected_vehicle],
-        iconAtlas: red_pin,
+        iconAtlas: PinOrigin,
         iconMapping:{
           origin_pin:{
             x: 0,
@@ -783,7 +784,7 @@ class App extends Component{
       }),new IconLayer({
         id: 'scatterplot-dest',
         data: [this.state.selected_vehicle],
-        iconAtlas: blue_pin,
+        iconAtlas: PinDestination,
         iconMapping:{
           dest_pin:{
             x: 0,
@@ -860,6 +861,7 @@ class App extends Component{
     let staticMap;
     staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}/>;
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+
       staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN} mapStyle="mapbox://styles/mapbox/dark-v9"/>;
     }
 

@@ -1,11 +1,10 @@
 const resolve = require('path').resolve;
 const webpack = require('webpack');
-//const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
   entry: {
-    main: './src/index.js'//,
-    //styles: './src/index.css'
+    main: './src/index.js'
   },
   output: {
     path: __dirname + '/dist',
@@ -20,7 +19,22 @@ module.exports = {
         use: ['babel-loader']
       },
       {
-        test: /\.(jpe?g|png|gif|woff|woff2|eot|ttf|svg)(\?[a-z0-9=.]+)?$/,
+        test: /\.svg$/,
+        //use: ['@svgr/webpack', 'file-loader'],
+        use: [
+          {
+            loader: "babel-loader"
+          },
+          {
+            loader: "react-svg-loader",
+            options: {
+              jsx: true // true outputs JSX tags
+            }
+          }
+        ]
+      },
+      {
+        test: /\.(jpe?g|png|gif|woff|woff2|eot|ttf)(\?[a-z0-9=.]+)?$/,
         loader: 'file-loader'
       },
       {
@@ -42,8 +56,11 @@ module.exports = {
       'process.env': {
         NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
       }
-    })//,
-    //new MiniCssExtractPlugin({filename: "[name].css"})
+    }),
+    new MiniCssExtractPlugin({
+      filename: "[name].css",
+      chunkFilename: "[id].css"
+    })
   ],
   devServer: {
     contentBase: './dist',

@@ -1,9 +1,13 @@
 import {panel} from "./style";
 import React, { Component } from 'react';
-import red_pin from "../res/pin_red.svg";
-import blue_pin from "../res/pin_blue.svg";
-import shelter_full from "../res/shelter_full.svg";
-import shelter_open from "../res/shelter_open.svg";
+//import red_pin from "../res/pin_red.svg";
+//import blue_pin from "../res/pin_blue.svg";
+import PinOrigin from "../res/pin_red.svg";
+import PinDestination from "../res/pin_blue.svg";
+//import shelter_full from "../res/shelter_full.svg";
+//import shelter_open from "../res/shelter_open.svg";
+import ShelterFull from "../res/shelter_full.svg";
+import ShelterOpen from "../res/shelter_open.svg";
 import expand from "../res/chevron-up.svg";
 import collapse from "../res/chevron-down.svg";
 import car4 from "../res/car4.png";
@@ -31,30 +35,25 @@ export class Panel extends Component{
 
             return(
                 <div className={className}>
-                    <button className="btn btn-sm btn-minimize" aria-hidden="true" onClick={this.togglePanel} data-tip={collapsed ? "Expand" : "Collapse"}>
+                    {/*<button className="btn btn-sm btn-minimize" aria-hidden="true" onClick={this.togglePanel} data-tip={collapsed ? "Expand" : "Collapse"}>
                         <img
                           key="info-panel-size"
                           src={collapsed ? expand : collapse}
                           alt={collapsed ? "Expand" : "Collapse"}/>
-                    </button>
+                    </button>*/}
 
                     <div className="card-body">
-                        
-                        
-                        
-                        
-
                         <div className="row">
                             <div className="col-3 col-sm-3 col-md-3">
                                 <h4 className="card-title">Vehicles</h4>
 
-                                <div className="icon icon-vehicle">
-                            <img
-                                src={car2}
-                                alt="Vehicles on the road"
-                                height="18"/>
-                            <span className="badge badge-light info-value">{Math.max(vehicles1.length,vehicles2.length)}</span>
-                        </div>
+                                <div className="icon-wrap icon-vehicle">
+                                    <span className="icon"><img
+                                        src={car2}
+                                        alt="Vehicles on the road"
+                                        height="18"/></span>
+                                    <span className="badge badge-light info-value">{Math.max(vehicles1.length,vehicles2.length)}</span>
+                                </div>
 
                                 <div className="info-group container-fluid">
                                     <div className="row">
@@ -84,13 +83,14 @@ export class Panel extends Component{
                             <div className="col-3 col-sm-3 col-md-3">
                                 <h4 className="card-title">Shelters</h4>
 
-                                <div className="icon icon-shelter">
-                            <img
-                                src={shelter_open}
-                                alt="Available shelter"
-                                height="18"/>
-                            <span className="badge badge-light info-value">0</span>
-                        </div>
+                                <div className="icon-wrap icon-shelter">
+                                    <span className="icon">{/*<img
+                                        src={shelter_open}
+                                        alt="Available shelter"
+                                        height="18"/>*/}
+                                    <ShelterOpen /></span>
+                                    <span className="badge badge-light info-value">0</span>
+                                </div>
 
                                 <div className="info-group container-fluid">
                                     <div className="row">
@@ -103,32 +103,24 @@ export class Panel extends Component{
                                     </div>
                                     <div className="row">
                                         <div className="col-5">
-                                            <img
+                                            {/*<img
                                                 src={shelter_full}
                                                 alt="Shelter has no available space"
-                                                height="12"/> Full
+                                                height="12"/>*/}<span className="icon"><ShelterFull /></span> Full
                                         </div>
                                         <div className="col-7 text-right">
-                                            <img
+                                            {/*<img
                                                 src={shelter_open}
                                                 alt="Available shelter"
-                                                height="12"/> Available
+                                                height="12"/>*/}<span className="icon"><ShelterOpen /></span> Available
                                         </div>
                                     </div>
                                     {/*<div className="row">
-                                        <div className="col-6">
-                                            Full
-                                        </div>
-                                        <div className="col-6 text-right">
-                                            Available
-                                        </div>
-                                    </div>
-                                    <div className="row">
                                         <div className="col-2">
                                             <img
                                                 src={shelter_full}
                                                 alt="Shelter has no available space"
-                                                height="12"/>
+                                                height="12"/><ShelterFull />
                                         </div>
                                         <div className="col-8">
                                             <div className="progress">
@@ -139,7 +131,7 @@ export class Panel extends Component{
                                             <img
                                                 src={shelter_open}
                                                 alt="Available shelter"
-                                                height="12"/>
+                                                height="12"/><ShelterOpen />
                                         </div>
                                     </div>*/}
                                 </div>
@@ -147,13 +139,13 @@ export class Panel extends Component{
                             <div className="col-3 col-sm-3 col-md-3">
                                 <h4 className="card-title">Selected Link</h4>
 
-                                <div className="icon icon-road">
-                            <img
-                                src={shelter_open}
-                                alt="Available shelter"
-                                height="18"/>
-                            <span className="badge badge-light info-value">{selected_link ? selected_link.Id : '--'}</span>
-                        </div>
+                                <div className="icon-wrap icon-road">
+                                    <span className="icon">{/*<img
+                                        src={shelter_open}
+                                        alt="Available shelter"
+                                        height="18"/>*/}<ShelterOpen /></span>
+                                    <span className="badge badge-light info-value">{selected_link ? selected_link.Id : '--'}</span>
+                                </div>
 
                                 <div className="info-group container-fluid">
                                     <div className="row"><div className="col-6">Link ID:</div><div className="col-6 text-right info-value">{selected_link ? selected_link.Id : '--'}</div></div>
@@ -164,27 +156,27 @@ export class Panel extends Component{
                             <div className="col-3 col-sm-3 col-md-3">
                                 <h4 className="card-title">Selected Vehicle</h4>
 
-                                <div className="icon icon-selected">
-                            <img
-                                src={car4}
-                                alt="Selected vehicle"
-                                height="18"/>
-                            <span className="badge badge-light info-value">{selected_vehicle ? selected_vehicle.id : '--'}</span>
-                        </div>
+                                <div className="icon-wrap icon-selected">
+                                    <span className="icon"><img
+                                        src={car4}
+                                        alt="Selected vehicle"
+                                        height="18"/></span>
+                                    <span className="badge badge-light info-value">{selected_vehicle ? selected_vehicle.id : '--'}</span>
+                                </div>
 
                                 <div className="info-group container-fluid">
                                     <div className="row"><div className="col-7">Vehicle ID:</div><div className="col-5 text-right info-value">{selected_vehicle ? selected_vehicle.id : '--'}</div></div>
                                     <div className="row"><div className="col-9">Origin:</div><div className="col-3 text-right">
-                                        <img
+                                        <span className="icon">{/*<img
                                             src={red_pin}
                                             alt="Origin pin"
-                                            height="12"/>
+                                            height="12"/>*/}<PinOrigin /></span>
                                     </div></div>
                                     <div className="row"><div className="col-9">Destination:</div><div className="col-3 text-right">
-                                        <img
+                                        <span className="icon">{/*<img
                                             src={blue_pin}
                                             alt="Destination pin"
-                                            height="12"/>
+                                            height="12"/>*/}<PinDestination /></span>
                                     </div></div>
                                 </div>
                             </div>

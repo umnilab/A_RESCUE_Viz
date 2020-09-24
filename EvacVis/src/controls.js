@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import { mapStylePicker, layerControl } from './style';
-import play from "../res/play.svg";
-import pause from "../res/pause.svg";
+//import play from "../res/play.svg";
+//import pause from "../res/pause.svg";
+import PlayIcon from "../res/play.svg";
+import PauseIcon from "../res/pause.svg";
 
 export const TRIPS_CONTROLS = {
   mode: {
@@ -266,15 +268,25 @@ const Slider = ({ settingName, settingLabel, value, propType, onChange }) => {
 };
 
 const ImageBtn = ({ settingName, value, onChange }) => {
+  const renderIcon = () => {
+    if (value) {
+      return <PauseIcon />
+    } else {
+      return <PlayIcon />
+    }
+  }
+
   return (
     <div className="form-group" key={settingName}>
       <button className="btn btn-secondary" id={settingName} key={settingName + '-btn'} onClick={e => onChange(settingName, !value)}>
-        <img
+        {renderIcon()}
+        <span className="sr-only">{value ? "Pause" : "Resume"}</span>
+        {/*<img
           key={settingName + '-' + value}
           src={value ? pause : play}
           alt={value ? "Pause" : "Resume"}
           width="32" 
-          height="32"/>
+          height="32"/>*/}
       </button>
     </div>
   );
