@@ -38,11 +38,20 @@ export class Chart extends Component {
                 </div>
             );
         }
+        // Raw data
+        //console.log('Plotdata2:');
+        //console.log(plotdata2);
 
-        console.log(plotdata2);
+        // Data for number of vehicles on the road
         // const data = plotdata.hour.map((k, i) => ({hour: Number(k), x: Number(k)+1, x0: Number(k) + 0, y: plotdata.counts[i], y0: 0}));
-        const data = plotdata2.ticks.map((k, i) => ({tick: Number(k), x: Number(k), y: plotdata2.counts[i]}));
-        console.log(data)
+        const vehicledata = plotdata2.ticks.map((k, i) => ({tick: Number(k), x: Number(k), y: plotdata2.counts[i]}));
+        //console.log('Vehicle counts:');
+        //console.log(vehicledata);
+
+        // Data for vehidles that reached destination
+        const arriveddata = plotdata2.ticks.map((k, i) => ({tick: Number(k), x: Number(k), y: plotdata2.arrived[i]}));
+        //console.log('Arrived counts:');
+        //console.log(arriveddata);
 
         let className = collapsed ? "chart-panel card collapsed" : "chart-panel card expanded";
 
@@ -91,7 +100,7 @@ export class Chart extends Component {
                                         {collapsed && <YAxis title="" tickValues={[0,1200]}/>}
                                         <LineSeries
                                             style={{strokeLinejoin: "round"}}
-                                            data={data}
+                                            data={vehicledata}
                                         />
                                         <XAxis title={collapsed ? "" : "Ticks"}/>
                                     </FlexibleXYPlot>
@@ -109,7 +118,7 @@ export class Chart extends Component {
                                         {collapsed && <YAxis title="" tickValues={[0,1200]}/>}
                                         <LineSeries
                                             style={{strokeLinejoin: "round"}}
-                                            data={data}
+                                            data={arriveddata}
                                         />
                                         <XAxis title={collapsed ? "" : "Ticks"}/>
                                     </FlexibleXYPlot>
@@ -127,7 +136,7 @@ export class Chart extends Component {
                                         {collapsed && <YAxis title="" tickValues={[0,1200]}/>}
                                         <LineSeries
                                             style={{strokeLinejoin: "round"}}
-                                            data={data}
+                                            data={vehicledata}
                                         />
                                         <XAxis title={collapsed ? "" : "Ticks"}/>
                                     </FlexibleXYPlot>

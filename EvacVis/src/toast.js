@@ -7,6 +7,7 @@ const Toast = props => {
 
     useEffect(() => {
         setList([...toastList]);
+        //this.setState({messages: [...toastList]});
 
         // eslint-disable-next-line
     }, [toastList]);
@@ -14,6 +15,7 @@ const Toast = props => {
     useEffect(() => {
         const interval = setInterval(() => {
             if (autoDelete && toastList.length && list.length) {
+                console.log('Deleting toast');
                 deleteToast(toastList[0].id);
             }
         }, dismissTime);
@@ -31,6 +33,7 @@ const Toast = props => {
         list.splice(listItemIndex, 1);
         toastList.splice(toastListItem, 1);
         setList([...list]);
+        //this.setState({messages: [...list]});
     }
 
     return (
@@ -39,15 +42,11 @@ const Toast = props => {
                     list.map((toast, i) =>
                         <div 
                             key={i}
-                            className={`notification toast ${position}`}
-                            style={{ backgroundColor: toast.backgroundColor }}
+                            className={`notification toast ${position} ${toast.type}`}
                         >
                             <button onClick={() => deleteToast(toast.id)}>
                                 &times;
                             </button>
-                            <div className="notification-image">
-                                <img src={toast.icon} alt="" />
-                            </div>
                             <div>
                                 <p className="notification-title">{toast.title}</p>
                                 <p className="notification-message">

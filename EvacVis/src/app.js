@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, } from 'react';
 import DeckGL, {IconLayer, GeoJsonLayer} from 'deck.gl';
 import {HeatmapLayer} from '@deck.gl/aggregation-layers';
 import {StaticMap} from "react-map-gl";
@@ -16,7 +16,7 @@ import Toast from "./toast";
 import {scaleThreshold} from 'd3-scale';
 
 import linkData from '../res/road.json';
-import car1 from "../res/car1.png";
+import car4 from "../res/car4.png";
 import car2 from "../res/car2.png";
 import red_pin from "../res/pin_red.svg";
 import blue_pin from "../res/pin_blue.svg";
@@ -83,8 +83,8 @@ function loadHistories(my_url){
         result = parseDirectoryListing(data);
       }
     },
-    failure: function(response) {
-      throw new 'Failed to load ';
+    error: function(request, status, error) {
+      console.log('error loading history');
     }
   });
   return result;
@@ -105,7 +105,7 @@ function parseDirectoryListing(text)
           .split('/');
         return x[x.length - 1];
       }); // clean up
-  console.log(docs);
+
   return docs;
 }
 
@@ -116,12 +116,14 @@ class App extends Component{
     this.state = {
       plotdata: {hour:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
         counts:[1286, 1307, 1264, 1243, 1365, 1346, 1402, 290, 273, 310, 326, 320, 298, 306, 293, 294, 306, 310, 260, 482, 451, 417, 439, 411]},
-      plotdata2: {ticks:[0], counts:[0]},
+      plotdata2: {ticks:[0], counts:[0], arrived:[0]},
+      arrived: 0,
       connected: false, // whether or not connect to the server
       synchronized: false, // false: asynchronized mode, loading data from the file directories, true: loading data directly from returned messages
-      loaded: false,
+      loaded: false, // whether or not history is loaded
       data_url: null,
       prefix: null,
+      messages: [],
       data: [], //current data
       subdata: [], //new data
       currentdata: [], //data for real time display
@@ -158,15 +160,14 @@ class App extends Component{
     this.resetCurrentTime = this.resetCurrentTime.bind(this);
   }
 
-  current_time=0; // Visualization_time
+  current_time = 0; // Visualization_time
   last_time = this.current_time; // Update_time
   timer = null;
-  time_step=40; // Ticks per file
+  time_step = 40; // Ticks per file
   buffer_time = 20; // Buffer_time for loading new data
   fail_count = 0; // Numbers of fails, if there are over 5 fails, restart the visualization, otherwise wait.
   currentFrame = null;
   framesPerTick = 60; //The maximum frame per tick
-
 
   // When open the webpage
   componentDidMount(){
@@ -192,7 +193,13 @@ class App extends Component{
     // create the connection
     ws = new WebSocket(addr);
     if(ws!=null){
-      this.setState({connected: true})
+      this.setState({connected: true});
+      this.setState({messages: [...this.state.messages, {
+        id: Math.floor((Math.random() * 101) + 1),
+        title: 'Success',
+        description: 'Successfully connected',
+        type: 'success'
+      }]});
       const loadNow = this.loadNow;
       const updateConfigOptions = this.updateConfigOptions;
       const upDateMaximalTime  = this.upDateMaximalTime;
@@ -266,6 +273,12 @@ class App extends Component{
       }
     }
     else{
+      this.setState({messages: [...this.state.messages, {
+        id: Math.floor((Math.random() * 101) + 1),
+        title: 'Error',
+        description: 'Failed to connect',
+        type: 'error'
+      }]});
       console.log("Connection failed");
     }
   }
@@ -318,16 +331,30 @@ class App extends Component{
   // Visualization control
   loadHistory(){
     let dir = document.getElementsByName("hist_txt")[0].value;
-    console.log(dir);
+    //console.log(dir);
     let file_names = loadHistories(dir);
+
     if (file_names.length) {
       this.setState({loaded: true});
+      this.setState({messages: [...this.state.messages, {
+        id: Math.floor((Math.random() * 101) + 1),
+        title: 'Success',
+        description: 'Successfully loaded directory',
+        type: 'success'
+      }]});
+
+      sleep(1000).then(()=>{
+        this.setState({data_url: dir, prefix: file_names[0]}, ()=>
+            this.resetCurrentTime())
+      });
+    } else {
+      this.setState({messages: [...this.state.messages, {
+        id: Math.floor((Math.random() * 101) + 1),
+        title: 'Error',
+        description: 'Failed to load history',
+        type: 'danger'
+      }]});
     }
-    sleep(1000).then(()=>{
-      console.log(file_names);
-      this.setState({data_url: dir, prefix: file_names[0]}, ()=>
-          this.resetCurrentTime())
-    });
   }
 
   // Called after sending "start" message to the server
@@ -360,23 +387,30 @@ class App extends Component{
     this.last_time = this.current_time; // Update_time
     this.timer = null;
     this.currentFrame = null;
-    this.setState({plotdata2:{ticks:[], counts:[]}}, ()=>this.restartAnimation());
+    this.setState({plotdata2:{ticks:[], counts:[], arrived:[]}}, ()=>this.restartAnimation());
   }
 
   // Core functions for visualizing trajectories
   restartAnimation(){
     if (this.timer) {
       this.timer.stop();
-    }console.log(this.state.data_url+"/"+this.state.prefix);
+    }
     d3.json(this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json").then(
         (new_data) => this.setState({subdata: new_data, subswitch: 0, data: []},
             () => {
               this.fetchData(this.last_time+this.time_step);
             }
-        ));
+        )).catch(() => {
+          this.setState({messages: [...this.state.messages, {
+            id: Math.floor((Math.random() * 101) + 1),
+            title: 'Error',
+            description: 'Failed to load JSON file: ' + this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json",
+            type: 'danger'
+          }]});
+        });
   }
 
-  //'vehicleID', 'startx', 'starty','endx','endy', 'speed', 'originx','originy','destx','desty', 'nearlyArrived'
+  //'vehicleID', 'startx', 'starty','endx','endy', 'speed', 'originx','originy','destx','desty', 'nearlyArrived', 'type'
   //'vehicleClass', 'roadID'
   fetchData=(current_time) => {
     this.setState({data: this.state.subdata}, () => {
@@ -384,15 +418,25 @@ class App extends Component{
       // Alert or stop when time tick arrive
       if(this.last_time > this.state.maximal_time){
         //Alert the user here.
-        Console.log("Boundary reached")
+        console.log("Boundary reached");
         if(this.timer){
           this.timer.stop();
         }
       }
       this.startAnimation();
-      d3.json(this.state.data_url+"/"+this.state.prefix+"."+((current_time)/40+1)+".json").then(
+      d3.json(this.state.data_url+"/"+this.state.prefix+"."+((current_time)/40+1)+".json")
+        .then(
           (new_data) => this.setState({subdata: new_data},
-              () => {console.log("fetching data")}));
+              () => {console.log("fetching data")}))
+        .catch(
+          () => {
+            this.setState({messages: [...this.state.messages, {
+              id: Math.floor((Math.random() * 101) + 1),
+              title: 'Error',
+              description: 'Failed to load JSON file: ' + this.state.data_url+"/"+this.state.prefix+"."+((current_time)/40+1)+".json",
+              type: 'danger'
+            }]});
+        });
     });
   };
 
@@ -400,7 +444,7 @@ class App extends Component{
   startAnimation = () => {
     if(this.current_time >= (this.last_time)) {
       console.log("Piece 1 take care of this update.");
-      console.log(this.current_time)
+      console.log(this.current_time);
       this.fetchData(this.last_time+this.time_step);
     }
     else{
@@ -433,6 +477,7 @@ class App extends Component{
                   originy: d[7],
                   destx: d[8],
                   desty: d[9],
+                  nearlyArrived: d[10],
                   type: d[11],
                   bearing: getDirection(d[1], d[2], d[3], d[4]),
                   interpolatePos: d3.geoInterpolate([d[1], d[2]], [d[3], d[4]])
@@ -440,6 +485,11 @@ class App extends Component{
           }, () => {
             this.state.plotdata2.ticks.push(this.current_time);
             this.state.plotdata2.counts.push(this.state.vehicles2.length);
+            let a = this.state.vehicles2.filter(v => {
+              return v.nearlyArrived > 0;//v.lon == v.destx && v.lat == v.desty;
+            });
+            this.state.arrived += a.length;
+            this.state.plotdata2.arrived.push(this.state.arrived);
             this.current_time += this.buffer_time;
             this.currentFrame = 0;
             this.timer = d3.timer(this.animationFrame);
@@ -460,12 +510,18 @@ class App extends Component{
                   originy: d[7],
                   destx: d[8],
                   desty: d[9],
+                  nearlyArrived: d[10],
                   type: d[11],
                   bearing: getDirection(d[1], d[2], d[3], d[4]),
                   interpolatePos: d3.geoInterpolate([d[1], d[2]], [d[3], d[4]])
                 }))}, ()=> {
             this.state.plotdata2.ticks.push(this.current_time);
             this.state.plotdata2.counts.push(this.state.vehicles1.length);
+            let a = this.state.vehicles1.filter(v => {
+              return v.nearlyArrived > 0;//v.lon == v.destx && v.lat == v.desty;
+            });
+            this.state.arrived += a.length;
+            this.state.plotdata2.arrived.push(this.state.arrived);
             this.current_time += this.buffer_time;
             this.currentFrame = 0;
             this.timer = d3.timer(this.animationFrame);
@@ -540,11 +596,14 @@ class App extends Component{
   }
 
   _onSelectVehicle({object}){
-    this.setState({selected_vehicle:{id:object.id,
+    console.log('Selected');
+    console.log(object);
+    this.setState({selected_vehicle:object});
+    /*this.setState({selected_vehicle:{id:object.id,
         originx:object.originx,
         originy:object.originy,
         destx: object.destx,
-        desty: object.desty}});
+        desty: object.desty}});*/
   }
 
   _onHoverVehicle({x, y, object}) {
@@ -595,6 +654,19 @@ class App extends Component{
             </div>
         )
     );
+  }
+
+  switchTab(e){
+    let links = document.querySelectorAll('.nav-link');
+
+    links.forEach(el => {
+      el.classList.remove('active');
+      document.getElementById(el.getAttribute('href').replace('#', '')).classList.remove('active');
+    });
+
+    //let el = e.target;
+    e.classList.add('active');
+    document.getElementById(e.getAttribute('href').replace('#', '')).classList.add('active');
   }
 
   render(){
@@ -700,7 +772,7 @@ class App extends Component{
           origin_pin:{
             x: 0,
             y: 0,
-            width: 512,
+            width: 288,
             height: 512,
             anchorY: 512
           }
@@ -716,7 +788,7 @@ class App extends Component{
           dest_pin:{
             x: 0,
             y: 0,
-            width: 512,
+            width: 288,
             height: 512,
             anchorY: 512
           }
@@ -724,7 +796,47 @@ class App extends Component{
         sizeScale: 50,
         getPosition: d => [d.destx, d.desty],
         getIcon: d =>"dest_pin",
-      })])
+      }),new IconLayer({
+          id: 'scatterplot-vehicle-selected',
+          data: this.state.vehicles1.filter(d => { return this.state.selected_vehicle && d.id == this.state.selected_vehicle.id }),
+          visible: (this.state.selected_vehicle ? this.state.subswitch : 0),
+          pickable: true,
+          onClick: this._onSelectVehicle,
+          onHover: this._onHoverVehicle,
+          iconAtlas: car4,
+          iconMapping:{
+            vehicle:{
+              x: 0,
+              y: 0,
+              width: 256,
+              height: 256
+            }
+          },
+          sizeScale: 20,
+          getPosition: d => [d.lon, d.lat],
+          getIcon: d => "vehicle",
+          getAngle: d => d.bearing-90,
+        }),new IconLayer({
+          id: 'scatterplot-vehicle-selected2',
+          data: this.state.vehicles2.filter(d => { return this.state.selected_vehicle && d.id == this.state.selected_vehicle.id }),
+          visible: (this.state.selected_vehicle ? 1-this.state.subswitch : 0),
+          pickable: true,
+          onClick: this._onSelectVehicle,
+          onHover: this._onHoverVehicle,
+          iconAtlas: car4,
+          iconMapping:{
+            vehicle:{
+              x: 0,
+              y: 0,
+              width: 256,
+              height: 256
+            }
+          },
+          sizeScale: 20,
+          getPosition: d => [d.lon, d.lat],
+          getIcon: d => "vehicle",
+          getAngle: d => d.bearing-90,
+        })]);
     }
     if(this.state.synchronized) {
       layers.unshift(new GeoJsonLayer({
@@ -747,13 +859,11 @@ class App extends Component{
 
     let staticMap;
     staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}/>;
-    /*if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN} mapStyle="mapbox://styles/mapbox/dark-v9"/>;
-    } else {
-      staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}/>;
-    }*/
+    }
+
     let className = this.state.loaded ? 'app-body loaded' : 'app-body';
-    const list = [];
 
     return(
         <div className={className}>
@@ -768,14 +878,14 @@ class App extends Component{
             {this._renderTooltip2}
           </DeckGL>
           <div className="app-pane app-controls">
-            {/*<ul className="nav nav-tabs" id="app-tab">
-              <li className="nav-item" role="presentation">
-                <a className="nav-link active" href="#layer-controls">Options</a>
+            <ul className="nav nav-tabs nav-fill">
+              <li className="nav-item">
+                <a href="#app-connection" className="nav-link active" onClick={e => this.switchTab(e.target)}>Data</a>
               </li>
-              <li className="nav-item" role="presentation">
-                <a className="nav-link" href="#statistics">Statistics</a>
+              <li className="nav-item">
+                <a href="#app-options" className="nav-link" onClick={e => this.switchTab(e.target)}>Options</a>
               </li>
-            </ul>*/}
+            </ul>
             <div className="tab-content" id="app-tabContent">
             <Client {...this.state} />
             <LayerControls
@@ -788,7 +898,7 @@ class App extends Component{
             />
             </div>
           </div>
-          <div className="app-pane app-options">
+          <div className="app-pane app-stats">
             <Panel {...this.state} />
           </div>
           <div className="app-pane app-plots">
@@ -796,10 +906,10 @@ class App extends Component{
           </div>
           <Legend {...this.state} />
           <Toast
-            toastList={list}
+            toastList={this.state.messages}
             position="top-right"
-            autoDelete={false}
-            autoDeleteTime="3000"
+            autoDelete={true}
+            dismissTime={3000}
           />
         </div>
     );

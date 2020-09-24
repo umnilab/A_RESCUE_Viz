@@ -6,7 +6,7 @@ import shelter_full from "../res/shelter_full.svg";
 import shelter_open from "../res/shelter_open.svg";
 import expand from "../res/chevron-up.svg";
 import collapse from "../res/chevron-down.svg";
-import car1 from "../res/car1.png";
+import car4 from "../res/car4.png";
 import car2 from "../res/car2.png";
 
 export class Panel extends Component{
@@ -39,9 +39,22 @@ export class Panel extends Component{
                     </button>
 
                     <div className="card-body">
+                        
+                        
+                        
+                        
+
                         <div className="row">
-                            <div className="col-3">
+                            <div className="col-3 col-sm-3 col-md-3">
                                 <h4 className="card-title">Vehicles</h4>
+
+                                <div className="icon icon-vehicle">
+                            <img
+                                src={car2}
+                                alt="Vehicles on the road"
+                                height="18"/>
+                            <span className="badge badge-light info-value">{Math.max(vehicles1.length,vehicles2.length)}</span>
+                        </div>
 
                                 <div className="info-group container-fluid">
                                     <div className="row">
@@ -52,7 +65,7 @@ export class Panel extends Component{
                                         <div className="col-9">Avg. speed:</div>
                                         <div className="col-3 text-right info-value">0</div>
                                     </div>
-                                    <div className="row">
+                                    {/*<div className="row">
                                         <div className="col-6">
                                             <img
                                                 src={car1}
@@ -65,11 +78,19 @@ export class Panel extends Component{
                                                 alt="Yellow car"
                                                 height="14"/> Yellow
                                         </div>
-                                    </div>
+                                    </div>*/}
                                 </div>
                             </div>
-                            <div className="col-3">
+                            <div className="col-3 col-sm-3 col-md-3">
                                 <h4 className="card-title">Shelters</h4>
+
+                                <div className="icon icon-shelter">
+                            <img
+                                src={shelter_open}
+                                alt="Available shelter"
+                                height="18"/>
+                            <span className="badge badge-light info-value">0</span>
+                        </div>
 
                                 <div className="info-group container-fluid">
                                     <div className="row">
@@ -123,8 +144,16 @@ export class Panel extends Component{
                                     </div>*/}
                                 </div>
                             </div>
-                            <div className="col-3">
+                            <div className="col-3 col-sm-3 col-md-3">
                                 <h4 className="card-title">Selected Link</h4>
+
+                                <div className="icon icon-road">
+                            <img
+                                src={shelter_open}
+                                alt="Available shelter"
+                                height="18"/>
+                            <span className="badge badge-light info-value">{selected_link ? selected_link.Id : '--'}</span>
+                        </div>
 
                                 <div className="info-group container-fluid">
                                     <div className="row"><div className="col-6">Link ID:</div><div className="col-6 text-right info-value">{selected_link ? selected_link.Id : '--'}</div></div>
@@ -132,8 +161,16 @@ export class Panel extends Component{
                                     <div className="row"><div className="col-7">Speed limit:</div><div className="col-5 text-right info-value">{selected_link ? selected_link.freeflowsp : 0} km/h</div></div>
                                 </div>
                             </div>
-                            <div className="col-3">
+                            <div className="col-3 col-sm-3 col-md-3">
                                 <h4 className="card-title">Selected Vehicle</h4>
+
+                                <div className="icon icon-selected">
+                            <img
+                                src={car4}
+                                alt="Selected vehicle"
+                                height="18"/>
+                            <span className="badge badge-light info-value">{selected_vehicle ? selected_vehicle.id : '--'}</span>
+                        </div>
 
                                 <div className="info-group container-fluid">
                                     <div className="row"><div className="col-7">Vehicle ID:</div><div className="col-5 text-right info-value">{selected_vehicle ? selected_vehicle.id : '--'}</div></div>

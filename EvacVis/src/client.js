@@ -230,7 +230,7 @@ export class Client extends Component{
         if (connected) {
             if (synchronized) {
                 return(
-                    <div className="connection-controls card connected synchronized">
+                    <div className="app-connection connection-controls card connected synchronized" id="app-connection">
                         <div className="card-header">
                             <div className="row">
                                 <div className="col-md-6">
@@ -296,6 +296,12 @@ export class Client extends Component{
                                     <input type="text" className="form-control" name="value2" id="value2"/>
                                 </div>
                                 <div className="form-group">
+                                    <label className="type">Type:</label>
+                                    <select className="form-control" name="type" id="type">
+                                        <option value="1">Road blockage</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
                                     <input type="button" className="btn btn-primary" name="set_event" value="Accept" onClick={this.processEventDialog}/>
                                     <input type="button" className="btn btn-link" name="cancel_event" value="Cancel" onClick={this.toggleEventDialog}/>
                                 </div>
@@ -306,7 +312,7 @@ export class Client extends Component{
             }
             else{
                 return (
-                    <div className="connection-controls card connected unsynchronized">
+                    <div className="app-connection connection-controls card connected unsynchronized" id="app-connection">
                         <div className="card-header">
                             <div className="row">
                                 <div className="col-md-6">
@@ -386,7 +392,8 @@ export class Client extends Component{
             }
         } else {
             return (
-                <div className="connection-controls card offline">
+                <div className="app-connection connection-controls offline active" id="app-connection">
+                    <div className="card">
                     <div className="card-header">
                         <span className="sr-only">Status: </span><span className="status status-danger">Offline</span> 
                     </div>
@@ -408,6 +415,7 @@ export class Client extends Component{
                                        onClick={loadHistory}><span className="spinner spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Load</button></span>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
             );

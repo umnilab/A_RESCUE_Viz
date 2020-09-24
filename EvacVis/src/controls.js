@@ -118,81 +118,82 @@ export class LayerControls extends Component {
     const {new_time} = this.state;
 
     return (
-      <div>
-      <div className="layer-controls card">
-        <div className="card-header">
-          {title && <h4 className="card-title">{title}</h4>}
+      <div className="app-options" id="app-options">
+        <div className="layer-controls card">
+          <div className="card-header">
+            {title && <h4 className="card-title">{title}</h4>}
+          </div>
+          <div className="card-body">
+            <Setting
+                key="mode"
+                settingName="mode"
+                settingLabel={propTypes['mode'].displayName}
+                value={settings['mode']}
+                propType={propTypes['mode']}
+                onChange={this._onValueChange.bind(this)}
+              />
+            <Setting
+                key="style"
+                settingName="style"
+                settingLabel={propTypes['style'].displayName}
+                value={settings['style']}
+                propType={propTypes['style']}
+                onChange={this._onValueChange.bind(this)}
+              />
+          </div>
         </div>
-        <div className="card-body">
-          <Setting
-              key="mode"
-              settingName="mode"
-              settingLabel={propTypes['mode'].displayName}
-              value={settings['mode']}
-              propType={propTypes['mode']}
-              onChange={this._onValueChange.bind(this)}
-            />
-          <Setting
-              key="style"
-              settingName="style"
-              settingLabel={propTypes['style'].displayName}
-              value={settings['style']}
-              propType={propTypes['style']}
-              onChange={this._onValueChange.bind(this)}
-            />
+
+        <div className="layer-controls card">
+          <div className="card-header">
+            <h4 className="card-title">Playback</h4>
+          </div>
+          <div className="card-body">
+            <div className="form-group">
+              <label htmlFor="new_time">Simulation time (seconds)</label>
+              <span className="badge badge-light">{(currentTime*0.3).toFixed(0)}</span>
+              <div className="input-group">
+                <input type="number" name="new_time" id="new_time" className="form-control" value={new_time} size="10" onChange={this.upDateTime}/>
+                <span className="input-group-append"><input type="button" name="jump_btn" className="btn btn-secondary" value="Jump" size="10"
+                     onClick={resetCurrentTime}/></span>
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="col-8">
+                <Setting
+                  key="speed"
+                  settingName="speed"
+                  settingLabel={propTypes['speed'].displayName}
+                  value={settings['speed']}
+                  propType={propTypes['speed']}
+                  onChange={this._onValueChange.bind(this)}
+                />
+              </div>
+              <div className="col-4 text-right">
+                <Setting
+                  key="play"
+                  settingName="play"
+                  settingLabel={propTypes['play'].displayName}
+                  value={settings['play']}
+                  propType={propTypes['play']}
+                  onChange={this._onValueChange.bind(this)}
+                />
+              </div>
+            </div>
+
+            {/*Object.keys(settings).map(key => (
+                <Setting
+                  key={key}
+                  settingName={key}
+                  settingLabel={propTypes[key].displayName}
+                  value={settings[key]}
+                  propType={propTypes[key]}
+                  onChange={this._onValueChange.bind(this)}
+                />
+            ))*/}
+          </div>
         </div>
       </div>
-
-      <div className="layer-controls card">
-        <div className="card-header">
-          <h4 className="card-title">Playback</h4>
-        </div>
-        <div className="card-body">
-          <div className="form-group">
-            <label htmlFor="new_time">Simulation time (seconds)</label>
-            <span className="badge badge-light">{(currentTime*0.3).toFixed(0)}</span>
-            <div className="input-group">
-              <input type="number" name="new_time" id="new_time" className="form-control" value={new_time} size="10" onChange={this.upDateTime}/>
-              <span className="input-group-append"><input type="button" name="jump_btn" className="btn btn-secondary" value="Jump" size="10"
-                   onClick={resetCurrentTime}/></span>
-            </div>
-          </div>
-
-          <div className="row">
-            <div className="col-md-8">
-              <Setting
-                key="speed"
-                settingName="speed"
-                settingLabel={propTypes['speed'].displayName}
-                value={settings['speed']}
-                propType={propTypes['speed']}
-                onChange={this._onValueChange.bind(this)}
-              />
-            </div>
-            <div className="col-md-4 text-right">
-              <Setting
-                key="play"
-                settingName="play"
-                settingLabel={propTypes['play'].displayName}
-                value={settings['play']}
-                propType={propTypes['play']}
-                onChange={this._onValueChange.bind(this)}
-              />
-            </div>
-          </div>
-
-          {/*Object.keys(settings).map(key => (
-              <Setting
-                key={key}
-                settingName={key}
-                settingLabel={propTypes[key].displayName}
-                value={settings[key]}
-                propType={propTypes[key]}
-                onChange={this._onValueChange.bind(this)}
-              />
-          ))*/}
-        </div>
-      </div></div>
     );
   }
 }
@@ -286,7 +287,7 @@ const Selector = ({ settingName, settingLabel, value, propType, onChange }) =>{
       <label>{settingLabel}</label>
       <div className="btn-group btn-group-toggle" data-toggle="buttons" key={settingName + '-group'}>
         {optValue.map(option => (
-            <label key={settingName + '-' + option.value + '-label'} className={value == option.value ? 'btn btn-light active' : 'btn btn-light'} htmlFor={settingName + '-' + option.value}>
+            <label key={settingName + '-' + option.value + '-label'} className={value == option.value ? 'btn btn-secondary active' : 'btn btn-secondary'} htmlFor={settingName + '-' + option.value}>
               <input type="radio" name={settingName} id={settingName + '-' + option.value}
                 key={settingName + '-' + option.value}
                 checked={value == option.value}
