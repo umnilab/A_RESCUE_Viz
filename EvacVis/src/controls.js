@@ -120,7 +120,7 @@ export class LayerControls extends Component {
     const {new_time} = this.state;
 
     return (
-      <div className="app-options" id="app-options">
+      <div className="app-options hide-dialog-config" id="app-options">
         <div className="layer-controls card">
           <div className="card-header">
             {title && <h4 className="card-title">{title}</h4>}

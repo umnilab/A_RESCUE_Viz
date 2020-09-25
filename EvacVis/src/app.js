@@ -123,8 +123,8 @@ class App extends Component{
       loaded: false, // whether or not history is loaded
       data_url: null,
       prefix: null,
-      theme: 'light',
-      messages: [],
+      dialog: false,
+      messages: [], // messages (errors, success, etc)
       data: [], //current data
       subdata: [], //new data
       currentdata: [], //data for real time display
@@ -134,7 +134,24 @@ class App extends Component{
       roadcount: new Map(linkdict),
       data_address: null,
       maximal_time: 3e6, //maximal ticks
-      options: "", //options for client side control
+      options: {
+        name: "",
+        demand: {
+          options: []
+        },
+        routing: {
+          options: []
+        },
+        event: {
+          options: []
+        },
+        ticks: {
+          minimum: 1,
+          maximum: 10,
+          step: 1,
+          default: 10
+        },
+      }, //options for client side control
       settings: Object.keys(TRIPS_CONTROLS).reduce(
           (accu, key) => ({
             ...accu,
@@ -193,19 +210,76 @@ class App extends Component{
 
     // create the connection
     ws = new WebSocket(addr);
-    if(ws!=null){
-      this.setState({connected: true});
-      this.setState({messages: [...this.state.messages, {
-        id: Math.floor((Math.random() * 101) + 1),
-        title: 'Success',
-        description: 'Successfully connected',
-        type: 'success'
-      }]});
+    console.log(ws);
+    if (ws != null) {
+      const that = this;
       const loadNow = this.loadNow;
       const updateConfigOptions = this.updateConfigOptions;
       const upDateMaximalTime  = this.upDateMaximalTime;
-      ws.onmessage=function(evt){
+that.setState({connected: true});
+      ws.addEventListener('error', function(e) {
+        that.setState({messages: [...that.state.messages, {
+          id: Math.floor((Math.random() * 101) + 1),
+          title: 'Error',
+          description: 'Failed to connect.',
+          type: 'danger'
+        }]});
+      });
 
+      ws.addEventListener('close', function(e) {
+        let reason = '';
+
+        // See http://tools.ietf.org/html/rfc6455#section-7.4.1
+        if (e.code == 1000) {
+          reason = 'Normal closure, meaning that the purpose for which the connection was established has been fulfilled.';
+          return;
+        }
+
+        if (e.code == 1001) {
+            reason = 'An endpoint is "going away", such as a server going down or a browser having navigated away from a page.';
+        } else if (e.code == 1002) {
+            reason = 'An endpoint is terminating the connection due to a protocol error';
+        } else if (event.code == 1003) {
+            reason = 'An endpoint is terminating the connection because it has received a type of data it cannot accept (e.g., an endpoint that understands only text data MAY send this if it receives a binary message).';
+        } else if (event.code == 1004) {
+            reason = 'Reserved. The specific meaning might be defined in the future.';
+        } else if (event.code == 1005) {
+            reason = 'No status code was actually present.';
+        } else if (event.code == 1006) {
+            reason = 'The connection was closed abnormally (e.g., without sending or receiving a Close control frame).';
+        } else if (event.code == 1007) {
+            reason = 'An endpoint is terminating the connection because it has received data within a message that was not consistent with the type of the message (e.g., non-UTF-8 [http://tools.ietf.org/html/rfc3629] data within a text message).';
+        } else if (event.code == 1008) {
+            reason = 'An endpoint is terminating the connection because it has received a message that "violates its policy". This reason is given either if there is no other sutible reason, or if there is a need to hide specific details about the policy.';
+        } else if (event.code == 1009) {
+            reason = 'An endpoint is terminating the connection because it has received a message that is too big for it to process.';
+        } else if (event.code == 1010) { // Note that this status code is not used by the server, because it can fail the WebSocket handshake instead.
+            reason = 'An endpoint (client) is terminating the connection because it has expected the server to negotiate one or more extension, but the server didn\'t return them in the response message of the WebSocket handshake. <br /> Specifically, the extensions that are needed are: ' + event.reason;
+        } else if (event.code == 1011) {
+            reason = 'A server is terminating the connection because it encountered an unexpected condition that prevented it from fulfilling the request.';
+        } else if (event.code == 1015) {
+            reason = 'The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can\'t be verified).';
+        }
+
+        that.setState({messages: [...that.state.messages, {
+          id: Math.floor((Math.random() * 101) + 1),
+          title: 'Error',
+          description: 'Connection closed' + (reason ? ': ' + reason : ''),
+          type: 'danger'
+        }]});
+      });
+
+      ws.addEventListener('open', function(e) {
+        that.setState({connected: true});
+        that.setState({messages: [...that.state.messages, {
+          id: Math.floor((Math.random() * 101) + 1),
+          title: 'Success',
+          description: 'Successfully connected',
+          type: 'success'
+        }]});
+      });
+
+      ws.addEventListener('message', function(evt){
         let evt_lines = evt.data.split('\n');
         let evt_type = evt_lines[0];
         let evt_msg = evt_lines.splice(1).join('\n');
@@ -231,6 +305,12 @@ class App extends Component{
 
           // append contents to the error log and scroll to bottom
           console.log(err_msg);
+          /*this.setState({messages: [...this.state.messages, {
+            id: Math.floor((Math.random() * 101) + 1),
+            title: 'Error',
+            description: err_msg,
+            type: 'error'
+          }]});*/
         }
         else if (evt_type == 'LOCATION') {
           // we have been sent a new URL for accessing the output files
@@ -271,9 +351,9 @@ class App extends Component{
           // handle an unknown message type, display it
           console.log(e);
         }
-      }
+      });
     }
-    else{
+    else {
       this.setState({messages: [...this.state.messages, {
         id: Math.floor((Math.random() * 101) + 1),
         title: 'Error',
@@ -291,6 +371,12 @@ class App extends Component{
     }
     this.setState({connected: false, synchronized: false})
     console.log("connection closed");
+    this.setState({messages: [...this.state.messages, {
+      id: Math.floor((Math.random() * 101) + 1),
+      title: 'Closed',
+      description: 'Connection closed',
+      type: 'info'
+    }]});
   }
 
   // Enter the synchronized mode, when using synchronized mode, visualize the real-time using websocket

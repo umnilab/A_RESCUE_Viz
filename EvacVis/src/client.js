@@ -47,27 +47,41 @@ export class Client extends Component{
 
     toggleConfigDialog() {
         this.updateConfigOptions(this.props.options);
-        let d = document.getElementsByName("config_dialog")[0];
+        //let d = document.getElementsByName("config_dialog")[0];
 
-        if (d.style.display === "none") {
+        //this.setState({dialog: this.state.dialog ? false : true});
+
+        let d = document.getElementById('app-tabContent');
+        if (d.classList.contains('dialog-config')) {
+            d.classList.remove('dialog-config');
+        } else {
+            d.classList.add('dialog-config');
+        }
+
+        /*if (d.style.display === "none") {
             d.style.display = "block";
         }
         else {
             d.style.display = "none";
-        }
+        }*/
     }
 
     toggleEventDialog() {
-        let d = document.getElementsByName("event_dialog")[0];
+        let d = document.getElementById('app-tabContent');
+        if (d.classList.contains('dialog-event')) {
+            d.classList.remove('dialog-event');
+        } else {
+            d.classList.add('dialog-event');
+        }
+        /*let d = document.getElementsByName("event_dialog")[0];
 
         if (d.style.display === "none") {
             d.style.display = "block";
         }
         else {
             d.style.display = "none";
-        }
+        }*/
     }
-
 
     fillMessageConfig() {
         // build the message which will be placed in the send message box
@@ -146,7 +160,6 @@ export class Client extends Component{
     }
 
     updateConfigOptions(options) {
-
         // parse the name field options
         let nameOption = options["name"];
         let nameInput = document.getElementsByName("config_name")[0];
@@ -243,7 +256,13 @@ export class Client extends Component{
                             </div>
                         </div>
                         <div className="card-body">
-                            <form name="template_form">
+                            <form name="template_form" className="hide-dialog-config hide-dialog-event">
+                                <div className="form-group">
+                                    <div className="input-group">
+                                        <label className="input-group-prepend"><span className="input-group-text">Simulation time:</span></label>
+                                        <input type="text" className="form-control" name="max_time" disabled="disabled"/>
+                                    </div>
+                                </div>
                                 <div className="form-group">
                                     <div className="input-group">
                                         <label className="input-group-prepend"><span className="input-group-text">Selected link:</span></label>
@@ -264,47 +283,48 @@ export class Client extends Component{
                                         </div>
                                     </div>
                                 </div>
+                                <div className="form-group">
+                                    <label className="sr-only" htmlFor="send_txt">Message</label>
+                                    <textarea name="send_txt" id="send_txt" className="form-control" onChange={this.upDateMess}/>
+                                </div>
+                                <div className="form-group">
+                                    <input type="button" name="send_btn" className="btn btn-primary" value="Send"
+                                           onClick={sendMessage}/>
+                                </div>
                             </form>
-                            <div className="form-group">
-                                <textarea name="send_txt" className="form-control" onChange={this.upDateMess}/>
-                                <input type="button" name="send_btn" className="btn btn-secondary" value="Send"
-                                       onClick={sendMessage}/>
-                            </div>
-                            <div className="form-group">
-                                <div className="input-group">
-                                    <label className="input-group-prepend"><span className="input-group-text">Simulation time:</span></label>
-                                    <input type="text" className="form-control" name="max_time" disabled="disabled"/>
-                                </div>
-                            </div>
-
-                            <dialog name="event_dialog" style={{display: "none"}}>
-                                <p><strong><em>Configure the event here:</em></strong></p>
-                                <div className="form-group">
-                                    <label className="start_time">Start Time:</label>
-                                    <input type="text" className="form-control" name="start_time" id="start_time"/>
-                                </div>
-                                <div className="form-group">
-                                    <label className="end_time">End Time:</label>
-                                    <input type="text" className="form-control" name="end_time" id="end_time"/>
-                                </div>
-                                <div className="form-group">
-                                    <label className="value1">Value 1:</label>
-                                    <input type="text" className="form-control" name="value1" id="value1"/>
-                                </div>
-                                <div className="form-group">
-                                    <label className="value2">Value 2:</label>
-                                    <input type="text" className="form-control" name="value2" id="value2"/>
-                                </div>
-                                <div className="form-group">
-                                    <label className="type">Type:</label>
-                                    <select className="form-control" name="type" id="type">
-                                        <option value="1">Road blockage</option>
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <input type="button" className="btn btn-primary" name="set_event" value="Accept" onClick={this.processEventDialog}/>
-                                    <input type="button" className="btn btn-link" name="cancel_event" value="Cancel" onClick={this.toggleEventDialog}/>
-                                </div>
+                            <dialog name="event_dialog">
+                                <form name="event_parameters">
+                                    <fieldset>
+                                        <legend className="card-title">Event Configuration</legend>
+                                        <p className="form-text">Configure the event.</p>
+                                        <div className="form-group">
+                                            <label className="start_time">Start Time:</label>
+                                            <input type="text" className="form-control" name="start_time" id="start_time"/>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="end_time">End Time:</label>
+                                            <input type="text" className="form-control" name="end_time" id="end_time"/>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="value1">Value 1:</label>
+                                            <input type="text" className="form-control" name="value1" id="value1"/>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="value2">Value 2:</label>
+                                            <input type="text" className="form-control" name="value2" id="value2"/>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="type">Type:</label>
+                                            <select className="form-control" name="type" id="type">
+                                                <option value="1">Road blockage</option>
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <input type="button" className="btn btn-primary" name="set_event" value="Accept" onClick={this.processEventDialog}/>
+                                            <input type="button" className="btn btn-link float-right" name="cancel_event" value="Cancel" onClick={this.toggleEventDialog}/>
+                                        </div>
+                                    </fieldset>
+                                </form>
                             </dialog>
                         </div>
                     </div>
@@ -325,17 +345,19 @@ export class Client extends Component{
                             </div>
                         </div>
                         <div className="card-body">
-                            <form name="template_form">
+                            <form name="template_form" className="hide-dialog-config hide-dialog-event">
+                                <div className="form-group">
+                                    <div className="input-group">
+                                        <label className="input-group-prepend"><span className="input-group-text">Simulation time:</span></label>
+                                        <input type="text" className="form-control" name="max_time" disabled="disabled"/>
+                                    </div>
+                                </div>
                                 <div className="form-group">
                                     <div className="row">
                                         <div className="col-md-7">
                                             <div className="btn-group">
-                                                <input type="button" name="create_btn" className="btn btn-secondary" disabled={false} value="Create"
-                                                       onClick={this.fillMesageCreate} />
                                                 <input type="button" name="config_btn" className="btn btn-secondary" disabled={false} value="Config"
                                                        onClick={this.toggleConfigDialog} />
-                                                <input type="button" name="start_btn" className="btn btn-secondary" disabled={false} value="Start"
-                                                       onClick={this.fillMessageStart} />
                                             </div>
                                         </div>
                                         <div className="col-md-5 text-right">
@@ -344,47 +366,61 @@ export class Client extends Component{
                                         </div>
                                     </div>
                                 </div>
+                                <div className="form-group">
+                                    <label className="sr-only" htmlFor="send_txt">Message</label>
+                                    <textarea name="send_txt" id="send_txt" className="form-control" onChange={this.upDateMess}/>
+                                </div>
+                                <div className="form-group">
+                                    <div className="row">
+                                        <div className="col-md-5">
+                                            <input type="button" name="send_btn" className="btn btn-primary" value="Send"
+                                                onClick={sendMessage}/>
+                                        </div>
+                                        <div className="col-md-7 text-right">
+                                           <div className="btn-group">
+                                                <input type="button" name="create_btn" className="btn btn-link" disabled={false} value="Create"
+                                                       onClick={this.fillMesageCreate} />
+                                                <input type="button" name="start_btn" className="btn btn-link" disabled={false} value="Start"
+                                                       onClick={this.fillMessageStart} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </form>
-                            <div className="form-group">
-                                <label className="sr-only" htmlFor="send_txt">Message</label>
-                                <textarea name="send_txt" id="send_txt" className="form-control" onChange={this.upDateMess}/>
-                                <input type="button" name="send_btn" className="btn btn-primary" value="Send"
-                                       onClick={sendMessage}/>
-                            </div>
-                            <div className="form-group">
-                                <div className="input-group">
-                                    <label className="input-group-prepend"><span className="input-group-text">Simulation time:</span></label>
-                                    <input type="text" className="form-control" name="max_time" disabled="disabled"/>
-                                </div>
-                            </div>
-                            <dialog name="config_dialog" style={{display: "none"}}>
-                                <p><strong><em>Configure the parameters of the simulation here:</em></strong></p>
-                                <div className="form-group">
-                                    <label htmlFor="config_name">Name:</label>
-                                    <input type="text" className="form-control" name="config_name" id="config_name" />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="config_demand">Demand File:</label>
-                                    <select className="form-control" name="config_demand" id="config_demand"></select>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="config_event">Event File:</label>
-                                    <select className="form-control" name="config_event" id="config_event"></select>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="config_routing">Routing Algorithm:</label>
-                                    <select className="form-control" name="config_routing" id="config_routing"></select>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="config_ticks">Simulation Length:</label>
-                                    <input type="range" name="config_ticks" id="config_ticks" min="1" max="10" step="1"
+                            <dialog name="config_dialog">
+                                <form name="simulation_parameters">
+                                    <fieldset>
+                                        <legend className="card-title">Simulation Configuration</legend>
+                                        <p className="form-text">Configure the parameters of the simulation.</p>
+                                        <div className="form-group">
+                                            <label htmlFor="config_name">Name:</label>
+                                            <input type="text" className="form-control" name="config_name" id="config_name" />
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="config_demand">Demand File:</label>
+                                            <select className="form-control" name="config_demand" id="config_demand"></select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="config_event">Event File:</label>
+                                            <select className="form-control" name="config_event" id="config_event"></select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="config_routing">Routing Algorithm:</label>
+                                            <select className="form-control" name="config_routing" id="config_routing"></select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="config_ticks">Simulation Length:</label>
+                                            <span className="badge badge-light"><span name="tick_value">{max_tick}</span></span>
+                                            <input type="range" className="custom-range" name="config_ticks" id="config_ticks" min="1" max="10" step="1"
                                                              onChange={
                                                                  e => this.setState({max_tick: e.target.value}, ()=> console.log(this.state.max_tick))}/>
-                                    &nbsp; <span name="tick_value">{max_tick}</span>
-                                </div>
-                                <br/>
-                                <input type="button" className="btn btn-primary" name="set_config" value="Accept" onClick={this.processConfigDialog}/>
-                                <input type="button" className="btn btn-outline-secondary" name="cancel_config" value="Cancel" onClick={this.toggleConfigDialog}/>
+                                        </div>
+                                        <div className="form-group">
+                                            <input type="button" className="btn btn-primary" name="set_config" value="Accept" onClick={this.processConfigDialog}/>
+                                            <input type="button" className="btn btn-link float-right" name="cancel_config" value="Cancel" onClick={this.toggleConfigDialog}/>
+                                        </div>
+                                    </fieldset>
+                                </form>
                             </dialog>
                         </div>
                     </div>
