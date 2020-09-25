@@ -8,8 +8,7 @@ import PinDestination from "../res/pin_blue.svg";
 //import shelter_open from "../res/shelter_open.svg";
 import ShelterFull from "../res/shelter_full.svg";
 import ShelterOpen from "../res/shelter_open.svg";
-import expand from "../res/chevron-up.svg";
-import collapse from "../res/chevron-down.svg";
+import Road from "../res/road.svg";
 import car4 from "../res/car4.png";
 import car2 from "../res/car2.png";
 
@@ -36,10 +35,7 @@ export class Panel extends Component{
             return(
                 <div className={className}>
                     {/*<button className="btn btn-sm btn-minimize" aria-hidden="true" onClick={this.togglePanel} data-tip={collapsed ? "Expand" : "Collapse"}>
-                        <img
-                          key="info-panel-size"
-                          src={collapsed ? expand : collapse}
-                          alt={collapsed ? "Expand" : "Collapse"}/>
+                        <span className="icon-chevron"></span><span className="sr-only">{collapsed ? "Expand" : "Collapse"}</span>
                     </button>*/}
 
                     <div className="card-body">
@@ -84,11 +80,9 @@ export class Panel extends Component{
                                 <h4 className="card-title">Shelters</h4>
 
                                 <div className="icon-wrap icon-shelter">
-                                    <span className="icon">{/*<img
-                                        src={shelter_open}
-                                        alt="Available shelter"
-                                        height="18"/>*/}
-                                    <ShelterOpen /></span>
+                                    <span className="icon">
+                                        <ShelterOpen />
+                                    </span>
                                     <span className="badge badge-light info-value">0</span>
                                 </div>
 
@@ -140,10 +134,9 @@ export class Panel extends Component{
                                 <h4 className="card-title">Selected Link</h4>
 
                                 <div className="icon-wrap icon-road">
-                                    <span className="icon">{/*<img
-                                        src={shelter_open}
-                                        alt="Available shelter"
-                                        height="18"/>*/}<ShelterOpen /></span>
+                                    <span className="icon">
+                                        <Road />
+                                    </span>
                                     <span className="badge badge-light info-value">{selected_link ? selected_link.Id : '--'}</span>
                                 </div>
 

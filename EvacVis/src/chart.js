@@ -1,13 +1,8 @@
 // Modified based on https://vis.academy/#/building-a-geospatial-app/4-a-basic-chart
 
 import React, { Component } from 'react';
-import { charts } from './style';
-import ChevronExpand from "../res/chevron-up.svg";
-import ChevronCollapse from "../res/chevron-down.svg";
-//import { ReactComponent as Expand } from "../res/chevron-up.svg";
-//import { ReactComponent as Collapse } from "../res/chevron-down.svg";
 import { LineSeries, VerticalBarSeries, FlexibleXYPlot, XAxis, YAxis } from 'react-vis';
-import {max} from "d3";
+import { max } from "d3";
 
 export class Chart extends Component {
     constructor(props) {
@@ -60,13 +55,7 @@ export class Chart extends Component {
         return (
             <div className={className}>
                 <button className="btn btn-minimize" onClick={this.togglePanel} data-tip={collapsed ? "Expand" : "Collapse"}>
-                    {/*<img
-                      key="chart-panel-size"
-                      src={collapsed ? expand : collapse}
-                      alt={collapsed ? "Expand" : "Collapse"}
-                      width="20"
-                      height="20"/>*/}
-                    {collapsed ? <ChevronExpand /> : <ChevronCollapse />}
+                    <span className="icon-chevron"></span><span className="sr-only">{collapsed ? "Expand" : "Collapse"}</span>
                 </button>
                 <div className="card">
                     <div className="card-body">
