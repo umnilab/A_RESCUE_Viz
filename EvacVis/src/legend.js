@@ -4,8 +4,8 @@ import * as d3 from "d3";
 import { legendColor } from 'd3-svg-legend';
 
 
-export class Legend extends Component{
-    render(){
+export class Legend extends Component {
+    render() {
         var ordinal = d3.scaleOrdinal()
             .domain(["<10", "[10,20)", "[20,30)", ">=30"])
             .range([ "rgb(211, 0, 0)", "rgb(211, 84, 0)", "rgb(247, 210, 76)", "rgb(112, 247, 76)"]);
@@ -29,11 +29,11 @@ export class Legend extends Component{
         svg.select(".legendOrdinal")
             .call(legendOrdinal);
 
-        return(
+        return (
             <div className="legend-panel">
-                    Legend (km/h)
-                    <svg height="25" width="350" id="map-legend">
-                    </svg>
+                Legend (km/h)
+                <svg height="25" width="350" id="map-legend"></svg>
             </div>
-        );}
+        );
+    }
 }

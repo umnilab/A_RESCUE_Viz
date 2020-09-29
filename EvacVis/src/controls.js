@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
 import { mapStylePicker, layerControl } from './style';
-//import play from "../res/play.svg";
-//import pause from "../res/pause.svg";
 import PlayIcon from "../res/play.svg";
 import PauseIcon from "../res/pause.svg";
 
@@ -40,7 +38,7 @@ export const TRIPS_CONTROLS = {
     value: true
   }
 };
-
+/*
 const MAPBOX_DEFAULT_MAPSTYLES = [
   { label: 'Streets V10', value: 'mapbox://styles/mapbox/streets-v10' },
   { label: 'Outdoors V10', value: 'mapbox://styles/mapbox/outdoors-v10' },
@@ -84,7 +82,7 @@ export function MapStylePicker({ currentStyle, onStyleChange }) {
       ))}
     </select>
   );
-}
+}*/
 
 export class LayerControls extends Component {
 
@@ -110,7 +108,7 @@ export class LayerControls extends Component {
     }
   }
 
-  upDateTime(){
+  upDateTime() {
     this.setState({new_time:
           (parseFloat(document.getElementsByName("new_time")[0].value))?(parseFloat(document.getElementsByName("new_time")[0].value)).toFixed(0): 0});
   }

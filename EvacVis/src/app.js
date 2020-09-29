@@ -15,7 +15,7 @@ import {Chart} from "./chart";
 import Toast from "./toast";
 import {scaleThreshold} from 'd3-scale';
 
-import linkData from '../res/road.json';
+//import linkData from '../res/road.json';
 import car4 from "../res/car4.png";
 import car2 from "../res/car2.png";
 import PinOrigin from "!file-loader!../res/pin_red.svg";
@@ -39,9 +39,10 @@ const initialViewState = {
 
 //initialize link dictionary
 const linkdict = new Map();
-for(var i = 0; i<linkData['features'].length; i++){
+let linkData = [];
+/*for (var i = 0; i<linkData['features'].length; i++) {
   linkdict.set(linkData['features'][i]['properties']['Id'],0);
-}
+}*/
 //console.log(linkdict)
 
 // Speed color
@@ -57,7 +58,7 @@ export const COLOR_SCALE = scaleThreshold()
 
 
 // Get direction based on start and end location.
-function getDirection(lon1, lat1, lon2, lat2){
+function getDirection(lon1, lat1, lon2, lat2) {
   var toRadians = function(v) { return v * Math.PI / 180; };
   var toDegrees = function(v) { return v * 180 / Math.PI; };
   var angleRadians = Math.atan2(lat2 - lat1, lon2 - lon1);
@@ -71,7 +72,7 @@ function sleep(ms) {
 }
 
 // load directories in the historical folder
-function loadHistories(my_url){
+function loadHistories(my_url) {
   var result = [];
   $.ajax({
     url: my_url,
@@ -110,12 +111,14 @@ function parseDirectoryListing(text)
 }
 
 class App extends Component{
-  constructor(props){
+  constructor(props) {
     super(props);
 
     this.state = {
-      plotdata: {hour:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
-        counts:[1286, 1307, 1264, 1243, 1365, 1346, 1402, 290, 273, 310, 326, 320, 298, 306, 293, 294, 306, 310, 260, 482, 451, 417, 439, 411]},
+      plotdata: {
+        hour:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+        counts:[1286, 1307, 1264, 1243, 1365, 1346, 1402, 290, 273, 310, 326, 320, 298, 306, 293, 294, 306, 310, 260, 482, 451, 417, 439, 411]
+      },
       plotdata2: {ticks:[0], counts:[0], arrived:[0]},
       arrived: 0,
       connected: false, // whether or not connect to the server
@@ -130,8 +133,8 @@ class App extends Component{
       currentdata: [], //data for real time display
       vehicles1: [],
       vehicles2: [],
-      roadspeed: new Map(linkdict),
-      roadcount: new Map(linkdict),
+      roadspeed: linkdict,//new Map(linkdict),
+      roadcount: linkdict,//new Map(linkdict),
       data_address: null,
       maximal_time: 3e6, //maximal ticks
       options: {
@@ -153,11 +156,13 @@ class App extends Component{
         },
       }, //options for client side control
       settings: Object.keys(TRIPS_CONTROLS).reduce(
-          (accu, key) => ({
-            ...accu,
-            [key]: TRIPS_CONTROLS[key].value
-          }),
-          {})};
+        (accu, key) => ({
+          ...accu,
+          [key]: TRIPS_CONTROLS[key].value
+        }),
+        {}
+      )
+    };
     this._onViewStateChange = this._onViewStateChange.bind(this);
     this._onSelectVehicle = this._onSelectVehicle.bind(this);
     this._onSelectLink = this._onSelectLink.bind(this);
@@ -188,35 +193,49 @@ class App extends Component{
   framesPerTick = 60; //The maximum frame per tick
 
   // When open the webpage
-  componentDidMount(){
+  componentDidMount() {
     //this.restartAnimation();
-    this.setState({connectServer: this.connectServer,
-        loadHistory: this.loadHistory,
-        loadNow: this.loadNow,
-        updateConfigOptions: this.updateConfigOptions,
-        disConnectServer: this.disConnectServer ,
-        synchronizeController: this.synchronizeController ,
-        releaseController: this.releaseController ,
-        sendMessage:this.sendMessage,
-        upDateMaximalTime: this.upDateMaximalTime,
-        resetCurrentTime: this.resetCurrentTime});
+    this.setState({
+      connectServer: this.connectServer,
+      loadHistory: this.loadHistory,
+      loadNow: this.loadNow,
+      updateConfigOptions: this.updateConfigOptions,
+      disConnectServer: this.disConnectServer ,
+      synchronizeController: this.synchronizeController ,
+      releaseController: this.releaseController ,
+      sendMessage:this.sendMessage,
+      upDateMaximalTime: this.upDateMaximalTime,
+      resetCurrentTime: this.resetCurrentTime
+    });
+
+    import('../res/road.json')
+      .then(data => {
+        for (var i = 0; i<data['features'].length; i++) {
+          linkdict.set(data['features'][i]['properties']['Id'],0);
+        }
+        linkData = data;
+      })
+      .catch(error => 'An error occurred while loading the component');
   }
 
 
   // Client control
-  connectServer(){
+  connectServer() {
     const addr = "ws://" + document.getElementsByName("addr_txt")[0].value;
     console.log("Connecting to (" + addr + ")...");
 
-    // create the connection
+    // Create the connection
     ws = new WebSocket(addr);
-    console.log(ws);
+    //console.log(ws);
     if (ws != null) {
       const that = this;
       const loadNow = this.loadNow;
       const updateConfigOptions = this.updateConfigOptions;
       const upDateMaximalTime  = this.upDateMaximalTime;
-that.setState({connected: true});
+
+      // Connection established
+      that.setState({connected: true});
+
       ws.addEventListener('error', function(e) {
         that.setState({messages: [...that.state.messages, {
           id: Math.floor((Math.random() * 101) + 1),
@@ -279,7 +298,7 @@ that.setState({connected: true});
         }]});
       });
 
-      ws.addEventListener('message', function(evt){
+      ws.addEventListener('message', function(evt) {
         let evt_lines = evt.data.split('\n');
         let evt_type = evt_lines[0];
         let evt_msg = evt_lines.splice(1).join('\n');
@@ -305,12 +324,6 @@ that.setState({connected: true});
 
           // append contents to the error log and scroll to bottom
           console.log(err_msg);
-          /*this.setState({messages: [...this.state.messages, {
-            id: Math.floor((Math.random() * 101) + 1),
-            title: 'Error',
-            description: err_msg,
-            type: 'error'
-          }]});*/
         }
         else if (evt_type == 'LOCATION') {
           // we have been sent a new URL for accessing the output files
@@ -319,7 +332,6 @@ that.setState({connected: true});
           loadNow(url);
         }
         else if (evt_type == 'OPTIONS') {
-
           // we have been sent a description of all possible config values
           try {
             // attempt to parse the given json string into an object
@@ -337,8 +349,8 @@ that.setState({connected: true});
             console.log("Something goes wrong when reading options.");
           }
         }
-        else if(evt_type == 'DATA'){
-          try{
+        else if (evt_type == 'DATA') {
+          try {
             let record = JSON.parse(evt_msg);
             updateCurrentTick(record);
           }
@@ -364,8 +376,8 @@ that.setState({connected: true});
     }
   }
   // Diconnect the server
-  disConnectServer(){
-    if(ws != null){
+  disConnectServer() {
+    if (ws != null) {
       ws.close();
       ws = null;
     }
@@ -380,8 +392,8 @@ that.setState({connected: true});
   }
 
   // Enter the synchronized mode, when using synchronized mode, visualize the real-time using websocket
-  synchronizeController(){
-    if(ws != null){
+  synchronizeController() {
+    if (ws != null) {
       this.setState({synchronized: true});
       if (this.timer) {
         this.timer.stop();
@@ -391,8 +403,8 @@ that.setState({connected: true});
   }
 
   // Quit synchronized mode
-  releaseController(){
-    if(ws != null){
+  releaseController() {
+    if (ws != null) {
       this.setState({synchronized: false})
     }
     this.restartAnimation();
@@ -400,8 +412,8 @@ that.setState({connected: true});
   }
 
   // Send text message through websocket
-  sendMessage(){
-    if(ws !=null){
+  sendMessage() {
+    if (ws !=null) {
       const msg = document.getElementsByName("send_txt")[0].value;
       ws.send(msg);
       console.log("Message being sent")
@@ -409,14 +421,14 @@ that.setState({connected: true});
   }
 
   // Load maximal time returned from the server
-  upDateMaximalTime(){
+  upDateMaximalTime() {
       const max_time = document.getElementsByName("max_time")[0].value;
       this.setState({maximal_time: max_time}, ()=>
           console.log("Current max time tick is", max_time));
   }
 
   // Visualization control
-  loadHistory(){
+  loadHistory() {
     let dir = document.getElementsByName("hist_txt")[0].value;
     //console.log(dir);
     let file_names = loadHistories(dir);
@@ -445,7 +457,7 @@ that.setState({connected: true});
   }
 
   // Called after sending "start" message to the server
-  loadNow(dir){
+  loadNow(dir) {
     //console.log(dir);
     sleep(20000).then(()=>{
       let file_names = loadHistories(dir+'/instance_0/');
@@ -457,16 +469,16 @@ that.setState({connected: true});
   }
 
   //  For controls.js
-  updateConfigOptions(options){
+  updateConfigOptions(options) {
     this.setState({options:options},()=>console.log(this.state.options))
   }
 
   // Load Data from websocket
-  updateCurrentTick(record){
+  updateCurrentTick(record) {
     this.setState({currentData:record},()=>console.log(this.state.currentData))
   }
 
-  resetCurrentTime(){
+  resetCurrentTime() {
     let new_time =  (Math.min(parseFloat(document.getElementsByName("new_time")[0].value), this.state.maximal_time)/0.3/this.time_step).toFixed(0)*this.time_step;
     console.log(new_time)
     this.current_time = new_time
@@ -478,7 +490,7 @@ that.setState({connected: true});
   }
 
   // Core functions for visualizing trajectories
-  restartAnimation(){
+  restartAnimation() {
     if (this.timer) {
       this.timer.stop();
     }
@@ -503,10 +515,10 @@ that.setState({connected: true});
     this.setState({data: this.state.subdata}, () => {
       this.last_time += this.time_step;
       // Alert or stop when time tick arrive
-      if(this.last_time > this.state.maximal_time){
+      if (this.last_time > this.state.maximal_time) {
         //Alert the user here.
         console.log("Boundary reached");
-        if(this.timer){
+        if (this.timer) {
           this.timer.stop();
         }
       }
@@ -529,18 +541,18 @@ that.setState({connected: true});
 
   // Vehicle location, use intercept to reduce the network load
   startAnimation = () => {
-    if(this.current_time >= (this.last_time)) {
+    if (this.current_time >= (this.last_time)) {
       console.log("Piece 1 take care of this update.");
       console.log(this.current_time);
       this.fetchData(this.last_time+this.time_step);
     }
-    else{
+    else {
       // console.log(this.state.data)
-      if(this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)]){
+      if (this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)]) {
         // Calculate link speed
         const roadSpeed = new Map(linkdict);
         const roadCount = new Map(linkdict);
-        for ( let i = 0; i< this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)].length; i++){
+        for ( let i = 0; i< this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)].length; i++) {
           const record = this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)][i]
           const roadID = record[12];
           roadSpeed.set(roadID, roadSpeed.get(roadID)+record[5])
@@ -548,7 +560,7 @@ that.setState({connected: true});
         }
         // Create special layer for selected vehicle
         // Calculate vehicle location
-        if(this.state.subswitch) {
+        if (this.state.subswitch) {
           this.fail_count=0; // refresh the fail count
           this.setState({
             subswitch: 1 - this.state.subswitch,
@@ -582,7 +594,7 @@ that.setState({connected: true});
             this.timer = d3.timer(this.animationFrame);
           })
         }
-        else{
+        else {
           this.setState({
             subswitch: 1-this.state.subswitch,
             roadspeed: roadSpeed,
@@ -615,15 +627,15 @@ that.setState({connected: true});
           })
         }
       }
-      else{
+      else {
         // The internet speed does not support this visualization speed, let's make the speed lower and reload the visualization
         this.fail_count+=1
         console.log("Piece 2 take care of this update.");
         console.log(this.current_time)
-        if(this.fail_count>5) {
+        if (this.fail_count>5) {
           this.fail_count=0;
           this.restartAnimation(); // Fail to load data, skip the current tick
-        }else{
+        } else {
           sleep(500).then(() => {
             this.startAnimation();
           })
@@ -634,14 +646,14 @@ that.setState({connected: true});
 
   animationFrame = () => {
     //console.log(this.currentFrame)
-    if(this.currentFrame>=(this.framesPerTick-this.state.settings.speed)){
+    if (this.currentFrame>=(this.framesPerTick-this.state.settings.speed)) {
       if (this.timer) {
         this.timer.stop();
       }
       this.startAnimation()
     }
     else {
-      if(this.state.subswitch){
+      if (this.state.subswitch) {
         let {vehicles1} = this.state;
         vehicles1 = vehicles1.map(d => {
           const [lon, lat] = d.interpolatePos(this.currentFrame / (this.framesPerTick-this.state.settings.speed));
@@ -651,12 +663,12 @@ that.setState({connected: true});
             lat
           };
         });
-        if(this.state.settings.play){
+        if (this.state.settings.play) {
           this.currentFrame += 1;
           this.setState({vehicles1});
         }
       }
-      else{
+      else {
         let {vehicles2} = this.state;
         vehicles2 = vehicles2.map(d => {
           const [lon, lat] = d.interpolatePos(this.currentFrame / (this.framesPerTick-this.state.settings.speed));
@@ -666,7 +678,7 @@ that.setState({connected: true});
             lat
           };
         });
-        if(this.state.settings.play){
+        if (this.state.settings.play) {
           this.currentFrame += 1;
           this.setState({vehicles2});
         }
@@ -682,7 +694,7 @@ that.setState({connected: true});
     this.setState({ settings });
   }
 
-  _onSelectVehicle({object}){
+  _onSelectVehicle({object}) {
     console.log('Selected');
     console.log(object);
     this.setState({selected_vehicle:object});
@@ -729,7 +741,7 @@ that.setState({connected: true});
   }
 
   // Tooltip for roads
-  _renderTooltip2(){
+  _renderTooltip2() {
     const { x2, y2, hovered_link, roadcount, roadspeed} = this.state;
     return (
         // if hoveredObject is null, then the rest part won't be execute
@@ -743,7 +755,7 @@ that.setState({connected: true});
     );
   }
 
-  switchTab(e){
+  switchTab(e) {
     let links = document.querySelectorAll('.nav-link');
 
     links.forEach(el => {
@@ -756,77 +768,85 @@ that.setState({connected: true});
     document.getElementById(e.getAttribute('href').replace('#', '')).classList.add('active');
   }
 
-  render(){
+  render() {
     let layers = [];
-    if(!this.state.synchronized) {
+    if (!this.state.synchronized) {
       if (this.state.settings.style==1) {
-        layers.push([new HeatmapLayer({
-          id: 'heatmap-vehicles',
-          data: this.state.vehicles1,
-          visible: this.state.subswitch,
-          pickable: false,
-          getPosition: d => [d.lon, d.lat],
-          getWeight: 1,
-          radiusPixels: 20,
-          intensity: 2,
-          threshold: 0.1
-        }),new HeatmapLayer({
-          id: 'heatmap-vehicles2',
-          data: this.state.vehicles2,
-          visible: 1-this.state.subswitch,
-          pickable: false,
-          getPosition: d => [d.lon, d.lat],
-          getWeight: 1,
-          radiusPixels: 20,
-          intensity: 2,
-          threshold: 0.1
-        })]);
-      } else{
-        layers.push([new IconLayer({
-          id: 'scatterplot-vehicles',
-          data: this.state.vehicles1,
-          visible: this.state.subswitch,
-          pickable: true,
-          onClick: this._onSelectVehicle,
-          onHover: this._onHoverVehicle,
-          iconAtlas: car2,
-          iconMapping:{
-            vehicle:{
-              x: 0,
-              y: 0,
-              width: 256,
-              height: 256
-            }
-          },
-          sizeScale: 20,
-          getPosition: d => [d.lon, d.lat],
-          getIcon: d => "vehicle",
-          getAngle: d => d.bearing-90,
-        }),new IconLayer({
-          id: 'scatterplot-vehicles2',
-          data: this.state.vehicles2,
-          visible: 1-this.state.subswitch,
-          pickable: true,
-          onClick: this._onSelectVehicle,
-          onHover: this._onHoverVehicle,
-          iconAtlas: car2,
-          iconMapping:{
-            vehicle:{
-              x: 0,
-              y: 0,
-              width: 256,
-              height: 256
-            }
-          },
-          sizeScale: 20,
-          getPosition: d => [d.lon, d.lat],
-          getIcon: d => "vehicle",
-          getAngle: d => d.bearing-90,
-        })])
+        layers.push([
+          new HeatmapLayer({
+            id: 'heatmap-vehicles',
+            data: this.state.vehicles1,
+            visible: this.state.subswitch,
+            pickable: false,
+            getPosition: d => [d.lon, d.lat],
+            getWeight: 1,
+            radiusPixels: 20,
+            intensity: 2,
+            threshold: 0.1
+          }),
+          new HeatmapLayer({
+            id: 'heatmap-vehicles2',
+            data: this.state.vehicles2,
+            visible: 1-this.state.subswitch,
+            pickable: false,
+            getPosition: d => [d.lon, d.lat],
+            getWeight: 1,
+            radiusPixels: 20,
+            intensity: 2,
+            threshold: 0.1
+          })
+        ]);
+      } else {
+        layers.push([
+          new IconLayer({
+            id: 'scatterplot-vehicles',
+            data: this.state.vehicles1,
+            visible: this.state.subswitch,
+            pickable: true,
+            onClick: this._onSelectVehicle,
+            onHover: this._onHoverVehicle,
+            iconAtlas: car2,
+            iconMapping:{
+              vehicle:{
+                x: 0,
+                y: 0,
+                width: 256,
+                height: 256
+              }
+            },
+            sizeScale: 20,
+            getPosition: d => [d.lon, d.lat],
+            getIcon: d => "vehicle",
+            getAngle: d => d.bearing-90,
+          }),
+          new IconLayer({
+            id: 'scatterplot-vehicles2',
+            data: this.state.vehicles2,
+            visible: 1-this.state.subswitch,
+            pickable: true,
+            onClick: this._onSelectVehicle,
+            onHover: this._onHoverVehicle,
+            iconAtlas: car2,
+            iconMapping:{
+              vehicle:{
+                x: 0,
+                y: 0,
+                width: 256,
+                height: 256
+              }
+            },
+            sizeScale: 20,
+            getPosition: d => [d.lon, d.lat],
+            getIcon: d => "vehicle",
+            getAngle: d => d.bearing-90,
+          })
+        ])
       }};
 
       // Optional layers
       if (this.state.settings.mode) {
+        console.log('link data');
+        console.log(linkData);
         layers.unshift(new GeoJsonLayer({
           id: 'geojson-link',
           data: linkData,
@@ -850,40 +870,43 @@ that.setState({connected: true});
         }))
       }
 
-    if (this.state.selected_vehicle){
-      layers.push([new IconLayer({
-        id: 'scatterplot-origin',
-        data: [this.state.selected_vehicle],
-        iconAtlas: PinOrigin,
-        iconMapping:{
-          origin_pin:{
-            x: 0,
-            y: 0,
-            width: 288,
-            height: 512,
-            anchorY: 512
-          }
-        },
-        sizeScale: 50,
-        getPosition:  d =>[d.originx, d.originy],
-        getIcon: d =>"origin_pin",
-      }),new IconLayer({
-        id: 'scatterplot-dest',
-        data: [this.state.selected_vehicle],
-        iconAtlas: PinDestination,
-        iconMapping:{
-          dest_pin:{
-            x: 0,
-            y: 0,
-            width: 288,
-            height: 512,
-            anchorY: 512
-          }
-        },
-        sizeScale: 50,
-        getPosition: d => [d.destx, d.desty],
-        getIcon: d =>"dest_pin",
-      }),new IconLayer({
+    if (this.state.selected_vehicle) {
+      layers.push([
+        new IconLayer({
+          id: 'scatterplot-origin',
+          data: [this.state.selected_vehicle],
+          iconAtlas: PinOrigin,
+          iconMapping:{
+            origin_pin:{
+              x: 0,
+              y: 0,
+              width: 288,
+              height: 512,
+              anchorY: 512
+            }
+          },
+          sizeScale: 50,
+          getPosition:  d =>[d.originx, d.originy],
+          getIcon: d =>"origin_pin",
+        }),
+        new IconLayer({
+          id: 'scatterplot-dest',
+          data: [this.state.selected_vehicle],
+          iconAtlas: PinDestination,
+          iconMapping:{
+            dest_pin:{
+              x: 0,
+              y: 0,
+              width: 288,
+              height: 512,
+              anchorY: 512
+            }
+          },
+          sizeScale: 50,
+          getPosition: d => [d.destx, d.desty],
+          getIcon: d =>"dest_pin",
+        }),
+        new IconLayer({
           id: 'scatterplot-vehicle-selected',
           data: this.state.vehicles1.filter(d => { return this.state.selected_vehicle && d.id == this.state.selected_vehicle.id }),
           visible: (this.state.selected_vehicle ? this.state.subswitch : 0),
@@ -903,7 +926,8 @@ that.setState({connected: true});
           getPosition: d => [d.lon, d.lat],
           getIcon: d => "vehicle",
           getAngle: d => d.bearing-90,
-        }),new IconLayer({
+        }),
+        new IconLayer({
           id: 'scatterplot-vehicle-selected2',
           data: this.state.vehicles2.filter(d => { return this.state.selected_vehicle && d.id == this.state.selected_vehicle.id }),
           visible: (this.state.selected_vehicle ? 1-this.state.subswitch : 0),
@@ -923,9 +947,10 @@ that.setState({connected: true});
           getPosition: d => [d.lon, d.lat],
           getIcon: d => "vehicle",
           getAngle: d => d.bearing-90,
-        })]);
+        })
+      ]);
     }
-    if(this.state.synchronized) {
+    if (this.state.synchronized) {
       layers.unshift(new GeoJsonLayer({
         id: 'geojson-link2',
         data: linkData,

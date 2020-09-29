@@ -25,31 +25,28 @@ export class Client extends Component{
         this.fillMessageEvent = this.fillMessageEvent.bind(this);
     }
 
-    upDateAddress(){
+    upDateAddress() {
         this.setState({address: document.getElementsByName("addr_txt")[0].value})
     }
 
-    upDateMess(){
+    upDateMess() {
         this.setState({message: document.getElementsByName("send_txt")[0].value})
     }
 
-    upDateHist(){
+    upDateHist() {
         this.setState({hist_addr: document.getElementsByName("hist_txt")[0].value})
     }
 
-    fillMesageCreate(){
+    fillMesageCreate() {
         document.getElementsByName("send_txt")[0].value = "CREATE";
     }
 
-    fillMessageStart(){
+    fillMessageStart() {
         document.getElementsByName("send_txt")[0].value = "START";
     }
 
     toggleConfigDialog() {
         this.updateConfigOptions(this.props.options);
-        //let d = document.getElementsByName("config_dialog")[0];
-
-        //this.setState({dialog: this.state.dialog ? false : true});
 
         let d = document.getElementById('app-tabContent');
         if (d.classList.contains('dialog-config')) {
@@ -57,13 +54,6 @@ export class Client extends Component{
         } else {
             d.classList.add('dialog-config');
         }
-
-        /*if (d.style.display === "none") {
-            d.style.display = "block";
-        }
-        else {
-            d.style.display = "none";
-        }*/
     }
 
     toggleEventDialog() {
@@ -73,14 +63,6 @@ export class Client extends Component{
         } else {
             d.classList.add('dialog-event');
         }
-        /*let d = document.getElementsByName("event_dialog")[0];
-
-        if (d.style.display === "none") {
-            d.style.display = "block";
-        }
-        else {
-            d.style.display = "none";
-        }*/
     }
 
     fillMessageConfig() {
@@ -232,7 +214,7 @@ export class Client extends Component{
         this.toggleConfigDialog();
     }
 
-    processEventDialog(){
+    processEventDialog() {
         this.fillMessageEvent();
         this.toggleEventDialog();
     }
@@ -330,7 +312,7 @@ export class Client extends Component{
                     </div>
                 )
             }
-            else{
+            else {
                 return (
                     <div className="app-connection connection-controls card connected unsynchronized" id="app-connection">
                         <div className="card-header">
