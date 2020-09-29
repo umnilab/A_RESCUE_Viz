@@ -9,7 +9,8 @@ module.exports = {
   output: {
     path: __dirname + '/dist',
     publicPath: '/HSEES_Viz/EvacVis/',
-    filename: 'index.js'
+    filename: 'index.js',
+    chunkFilename: '[name].bundle.js'
   },
   module: {
     rules: [
