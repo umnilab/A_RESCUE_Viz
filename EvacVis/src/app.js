@@ -1,3 +1,5 @@
+/* global $ */ // jquery.js
+
 import React, {Component, } from 'react';
 import DeckGL, {IconLayer, GeoJsonLayer} from 'deck.gl';
 import {HeatmapLayer} from '@deck.gl/aggregation-layers';
@@ -84,7 +86,7 @@ function loadHistories(my_url) {
         result = parseDirectoryListing(data);
       }
     },
-    error: function(request, status, error) {
+    error: function() {
       console.log('error loading history');
     }
   });
@@ -102,7 +104,7 @@ function parseDirectoryListing(text)
       .map((x) => {
         x = x.replace('href="', '')
           .replace('"', '')
-          .replace(/^([^\.]+)(\..*)/, '$1')
+          .replace(/^([^.]+)(\..*)/, '$1')
           .split('/');
         return x[x.length - 1];
       }); // clean up
@@ -215,7 +217,7 @@ class App extends Component{
         }
         linkData = data;
       })
-      .catch(error => 'An error occurred while loading the component');
+      .catch(error => error.code + ': An error occurred while loading the component');
   }
 
 
@@ -232,11 +234,12 @@ class App extends Component{
       const loadNow = this.loadNow;
       const updateConfigOptions = this.updateConfigOptions;
       const upDateMaximalTime  = this.upDateMaximalTime;
+      const updateCurrentTick = this.updateCurrentTick;
 
       // Connection established
       that.setState({connected: true});
 
-      ws.addEventListener('error', function(e) {
+      ws.addEventListener('error', function() {
         that.setState({messages: [...that.state.messages, {
           id: Math.floor((Math.random() * 101) + 1),
           title: 'Error',
@@ -288,7 +291,7 @@ class App extends Component{
         }]});
       });
 
-      ws.addEventListener('open', function(e) {
+      ws.addEventListener('open', function() {
         that.setState({connected: true});
         that.setState({messages: [...that.state.messages, {
           id: Math.floor((Math.random() * 101) + 1),
@@ -361,7 +364,7 @@ class App extends Component{
         }
         else {
           // handle an unknown message type, display it
-          console.log(e);
+          console.log(evt);
         }
       });
     }
@@ -494,19 +497,21 @@ class App extends Component{
     if (this.timer) {
       this.timer.stop();
     }
-    d3.json(this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json").then(
+    d3.json(this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json")
+      .then(
         (new_data) => this.setState({subdata: new_data, subswitch: 0, data: []},
             () => {
               this.fetchData(this.last_time+this.time_step);
             }
-        )).catch(() => {
-          this.setState({messages: [...this.state.messages, {
-            id: Math.floor((Math.random() * 101) + 1),
-            title: 'Error',
-            description: 'Failed to load JSON file: ' + this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json",
-            type: 'danger'
-          }]});
-        });
+        ))
+      .catch(() => {
+        this.setState({messages: [...this.state.messages, {
+          id: Math.floor((Math.random() * 101) + 1),
+          title: 'Error',
+          description: 'Failed to load JSON file: ' + this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json",
+          type: 'danger'
+        }]});
+      });
   }
 
   //'vehicleID', 'startx', 'starty','endx','endy', 'speed', 'originx','originy','destx','desty', 'nearlyArrived', 'type'
@@ -587,7 +592,7 @@ class App extends Component{
             let a = this.state.vehicles2.filter(v => {
               return v.nearlyArrived > 0;//v.lon == v.destx && v.lat == v.desty;
             });
-            this.state.arrived += a.length;
+            this.setState({ arrived: this.state.arrived + a.length });
             this.state.plotdata2.arrived.push(this.state.arrived);
             this.current_time += this.buffer_time;
             this.currentFrame = 0;
@@ -619,7 +624,7 @@ class App extends Component{
             let a = this.state.vehicles1.filter(v => {
               return v.nearlyArrived > 0;//v.lon == v.destx && v.lat == v.desty;
             });
-            this.state.arrived += a.length;
+            this.setState({ arrived: this.state.arrived + a.length });
             this.state.plotdata2.arrived.push(this.state.arrived);
             this.current_time += this.buffer_time;
             this.currentFrame = 0;
@@ -816,7 +821,7 @@ class App extends Component{
             },
             sizeScale: 20,
             getPosition: d => [d.lon, d.lat],
-            getIcon: d => "vehicle",
+            getIcon: () => "vehicle",
             getAngle: d => d.bearing-90,
           }),
           new IconLayer({
@@ -837,38 +842,37 @@ class App extends Component{
             },
             sizeScale: 20,
             getPosition: d => [d.lon, d.lat],
-            getIcon: d => "vehicle",
+            getIcon: () => "vehicle",
             getAngle: d => d.bearing-90,
           })
         ])
-      }};
-
-      // Optional layers
-      if (this.state.settings.mode) {
-        console.log('link data');
-        console.log(linkData);
-        layers.unshift(new GeoJsonLayer({
-          id: 'geojson-link',
-          data: linkData,
-          opacity: 1,
-          lineWidthUnits: 'pixels',
-          lineWidthMinPixels: 0,
-          lineWidthMaxPixels: 6,
-          parameters: {
-            depthTest: false
-          },
-          pickable: true,
-          onClick: this._onSelectLink,
-          onHover: this._onHoverLink,
-          getLineColor: f => COLOR_SCALE((this.state.roadcount.get(f.properties.Id)==0)?40:
-              (this.state.roadspeed.get(f.properties.Id)*3.6/(this.state.roadcount.get(f.properties.Id)))),
-          getLineWidth: f => 200,//(this.state.roadcount.get(f.properties.Id)==0)?0: 200,
-          updateTriggers: {
-            getLineColor: this.current_time,
-            getLineWidth: this.current_time
-          }
-        }))
       }
+    }
+
+    // Optional layers
+    if (this.state.settings.mode) {
+      layers.unshift(new GeoJsonLayer({
+        id: 'geojson-link',
+        data: linkData,
+        opacity: 1,
+        lineWidthUnits: 'pixels',
+        lineWidthMinPixels: 0,
+        lineWidthMaxPixels: 6,
+        parameters: {
+          depthTest: false
+        },
+        pickable: true,
+        onClick: this._onSelectLink,
+        onHover: this._onHoverLink,
+        getLineColor: f => COLOR_SCALE((this.state.roadcount.get(f.properties.Id)==0)?40:
+            (this.state.roadspeed.get(f.properties.Id)*3.6/(this.state.roadcount.get(f.properties.Id)))),
+        getLineWidth: () => 200,//(this.state.roadcount.get(f.properties.Id)==0)?0: 200,
+        updateTriggers: {
+          getLineColor: this.current_time,
+          getLineWidth: this.current_time
+        }
+      }))
+    }
 
     if (this.state.selected_vehicle) {
       layers.push([
@@ -886,8 +890,8 @@ class App extends Component{
             }
           },
           sizeScale: 50,
-          getPosition:  d =>[d.originx, d.originy],
-          getIcon: d =>"origin_pin",
+          getPosition:  d => [d.originx, d.originy],
+          getIcon: () => "origin_pin",
         }),
         new IconLayer({
           id: 'scatterplot-dest',
@@ -904,7 +908,7 @@ class App extends Component{
           },
           sizeScale: 50,
           getPosition: d => [d.destx, d.desty],
-          getIcon: d =>"dest_pin",
+          getIcon: () => "dest_pin",
         }),
         new IconLayer({
           id: 'scatterplot-vehicle-selected',
@@ -924,7 +928,7 @@ class App extends Component{
           },
           sizeScale: 20,
           getPosition: d => [d.lon, d.lat],
-          getIcon: d => "vehicle",
+          getIcon: () => "vehicle",
           getAngle: d => d.bearing-90,
         }),
         new IconLayer({
@@ -945,7 +949,7 @@ class App extends Component{
           },
           sizeScale: 20,
           getPosition: d => [d.lon, d.lat],
-          getIcon: d => "vehicle",
+          getIcon: () => "vehicle",
           getAngle: d => d.bearing-90,
         })
       ]);
@@ -964,15 +968,14 @@ class App extends Component{
         pickable: true,
         onClick: this._onSelectEventLink,
         onHover: this._onHoverLink,
-        getLineColor: f => [200, 200, 200],
-        getLineWidth: f => 300,//(this.state.roadcount.get(f.properties.Id)==0)?0: 200
+        getLineColor: () => [200, 200, 200],
+        getLineWidth: () => 300,//(this.state.roadcount.get(f.properties.Id)==0)?0: 200
       }))
     }
 
     let staticMap;
     staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}/>;
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-
       staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN} mapStyle="mapbox://styles/mapbox/dark-v9"/>;
     }
 

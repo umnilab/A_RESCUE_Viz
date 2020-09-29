@@ -1,8 +1,9 @@
 // Modified based on https://vis.academy/#/building-a-geospatial-app/4-a-basic-chart
 
 import React, { Component } from 'react';
-import { LineSeries, VerticalBarSeries, FlexibleXYPlot, XAxis, YAxis } from 'react-vis';
-import { max } from "d3";
+import { LineSeries, FlexibleXYPlot, XAxis, YAxis } from 'react-vis';
+//import { max } from "d3";
+import PropTypes from 'prop-types';
 
 export class Chart extends Component {
     constructor(props) {
@@ -16,10 +17,11 @@ export class Chart extends Component {
 
     togglePanel() {
         this.setState({ collapsed: this.state.collapsed ? false : true });
+        document.resize();
     }
 
     render() {
-        const { plotdata, plotdata2 } = this.props;
+        const { plotdata2 } = this.props;//plotdata, plotdata2
 
         let collapsed = this.state.collapsed;
 
@@ -139,5 +141,9 @@ export class Chart extends Component {
                 </div>
             </div>
         );
-    };
+    }
+}
+
+Chart.propTypes = {
+    plotdata2: PropTypes.object
 }

@@ -1,8 +1,7 @@
-import {clientControl} from "./style";
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
-
-export class Client extends Component{
+export class Client extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -145,6 +144,8 @@ export class Client extends Component{
         // parse the name field options
         let nameOption = options["name"];
         let nameInput = document.getElementsByName("config_name")[0];
+        console.log(nameOption);
+        console.log(nameInput.value);
 
         // parse the demand file options
         let demandOption = options["demand"];
@@ -220,8 +221,9 @@ export class Client extends Component{
     }
 
     render() {
-        const {connected, synchronized, connectServer, disConnectServer, sendMessage, loadHistory, synchronizeController, releaseController, maximal_time} = this.props;
-        const {message, address, hist_addr,max_tick} = this.state;
+        const {connected, synchronized, connectServer, disConnectServer, sendMessage, loadHistory, synchronizeController, releaseController} = this.props; //, maximal_time
+        const {address, hist_addr, max_tick} = this.state;
+
         if (connected) {
             if (synchronized) {
                 return(
@@ -439,4 +441,18 @@ export class Client extends Component{
             );
         }
     }
+}
+
+Client.propTypes = {
+    options: PropTypes.object,
+    nameOption: PropTypes.string,
+    nameInput: PropTypes.string,
+    connected: PropTypes.bool,
+    synchronized: PropTypes.bool,
+    connectServer: PropTypes.func,
+    disConnectServer: PropTypes.func,
+    sendMessage: PropTypes.func,
+    loadHistory: PropTypes.func,
+    synchronizeController: PropTypes.func,
+    releaseController: PropTypes.func
 }

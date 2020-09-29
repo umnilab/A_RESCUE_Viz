@@ -1,5 +1,5 @@
-import {panel} from "./style";
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import PinOrigin from "../res/pin_red.svg";
 import PinDestination from "../res/pin_blue.svg";
 import ShelterFull from "../res/shelter_full.svg";
@@ -180,4 +180,10 @@ export class Panel extends Component {
             </div>
         );
     }
+}
+Panel.propTypes = {
+  vehicles1: PropTypes.array,
+  vehicles2: PropTypes.array,
+  selected_vehicle: PropTypes.object,
+  selected_link: PropTypes.object
 }

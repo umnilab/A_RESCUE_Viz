@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { mapStylePicker, layerControl } from './style';
 import PlayIcon from "../res/play.svg";
 import PauseIcon from "../res/pause.svg";
+import PropTypes from 'prop-types';
 
 export const TRIPS_CONTROLS = {
   mode: {
@@ -197,6 +197,14 @@ export class LayerControls extends Component {
     );
   }
 }
+LayerControls.propTypes = {
+  title: PropTypes.string,
+  settings: PropTypes.object,
+  propTypes: PropTypes.object,
+  currentTime: PropTypes.number,
+  resetCurrentTime: PropTypes.func,
+  onChange: PropTypes.func
+}
 
 const Setting = props => {
   const { propType } = props;
@@ -238,6 +246,12 @@ const Checkbox = ({ settingName, settingLabel, value, onChange }) => {
     </div>
   );
 };
+Checkbox.propTypes = {
+  settingName: PropTypes.string,
+  settingLabel: PropTypes.string,
+  value: PropTypes.number,
+  onChange: PropTypes.func
+}
 
 const Slider = ({ settingName, settingLabel, value, propType, onChange }) => {
   const { max, min, step } = propType;
@@ -264,6 +278,13 @@ const Slider = ({ settingName, settingLabel, value, propType, onChange }) => {
     </div>
   );
 };
+Slider.propTypes = {
+  settingName: PropTypes.string,
+  settingLabel: PropTypes.string,
+  value: PropTypes.number,
+  propType: PropTypes.object,
+  onChange: PropTypes.func
+}
 
 const ImageBtn = ({ settingName, value, onChange }) => {
   const renderIcon = () => {
@@ -276,7 +297,7 @@ const ImageBtn = ({ settingName, value, onChange }) => {
 
   return (
     <div className="form-group" key={settingName}>
-      <button className="btn btn-secondary" id={settingName} key={settingName + '-btn'} onClick={e => onChange(settingName, !value)}>
+      <button className="btn btn-secondary" id={settingName} key={settingName + '-btn'} onClick={() => onChange(settingName, !value)}>
         {renderIcon()}
         <span className="sr-only">{value ? "Pause" : "Resume"}</span>
         {/*<img
@@ -289,6 +310,11 @@ const ImageBtn = ({ settingName, value, onChange }) => {
     </div>
   );
 };
+ImageBtn.propTypes = {
+  settingName: PropTypes.string,
+  value: PropTypes.bool,
+  onChange: PropTypes.func
+}
 
 const Selector = ({ settingName, settingLabel, value, propType, onChange }) =>{
   const {optValue} = propType;
@@ -308,6 +334,13 @@ const Selector = ({ settingName, settingLabel, value, propType, onChange }) =>{
       </div>
     </div>
   )
+}
+Selector.propTypes = {
+  settingName: PropTypes.string,
+  settingLabel: PropTypes.string,
+  value: PropTypes.number,
+  propType: PropTypes.object,
+  onChange: PropTypes.func
 }
 
 const SelectList = ({ settingName, settingLabel, value, propType, onChange }) =>{
@@ -333,4 +366,11 @@ const SelectList = ({ settingName, settingLabel, value, propType, onChange }) =>
       </select>
     </div>
   )
+}
+SelectList.propTypes = {
+  settingName: PropTypes.string,
+  settingLabel: PropTypes.string,
+  value: PropTypes.number,
+  propType: PropTypes.object,
+  onChange: PropTypes.func
 }
