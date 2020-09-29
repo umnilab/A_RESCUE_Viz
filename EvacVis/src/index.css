@@ -222,9 +222,14 @@ dialog {
 	.collapsed .chart-container {
 		height: 80px;
 	}
+	.collapsed.info-panel .card-title,
 	.collapsed .chart-title {
 		display: none;
 	}
+	.collapsed .icon-wrap {
+		display: block;
+	}
+
 	.layer-controls,
 	.info-panel,
 	.chart-panel {
