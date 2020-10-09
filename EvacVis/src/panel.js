@@ -23,7 +23,7 @@ export class Panel extends Component {
     }
 
     render() {
-        const {vehicles1, vehicles2, selected_vehicle, selected_link} = this.props;
+        const {vehicles1, vehicles1speed, vehicles2, vehicles2speed, selected_vehicle, selected_link, shelters} = this.props;
 
         let collapsed = this.state.collapsed;
         let className = collapsed ? "info-panel card collapsed" : "info-panel card expanded";
@@ -49,12 +49,12 @@ export class Panel extends Component {
 
                             <div className="info-group container-fluid">
                                 <div className="row">
-                                    <div className="col-9">On road:</div>
-                                    <div className="col-3 text-right info-value">{Math.max(vehicles1.length,vehicles2.length)}</div>
+                                    <div className="col-7">On road:</div>
+                                    <div className="col-5 text-right info-value">{Math.max(vehicles1.length,vehicles2.length)}</div>
                                 </div>
                                 <div className="row">
-                                    <div className="col-9">Avg. speed:</div>
-                                    <div className="col-3 text-right info-value">0</div>
+                                    <div className="col-7">Avg. speed:</div>
+                                    <div className="col-5 text-right info-value">{Math.max(vehicles1speed,vehicles2speed)} km/h</div>
                                 </div>
                                 {/*<div className="row">
                                     <div className="col-6">
@@ -79,17 +79,17 @@ export class Panel extends Component {
                                 <span className="icon">
                                     <ShelterOpen />
                                 </span>
-                                <span className="badge badge-light info-value">0</span>
+                                <span className="badge badge-light info-value">{(shelters.capacity - shelters.occupancy).toLocaleString()}</span>
                             </div>
 
                             <div className="info-group container-fluid">
                                 <div className="row">
-                                    <div className="col-9">Total occupancy:</div>
-                                    <div className="col-3 text-right info-value">0</div>
+                                    <div className="col-8">Total occupancy:</div>
+                                    <div className="col-4 text-right info-value">{shelters.occupancy.toLocaleString()}</div>
                                 </div>
                                 <div className="row">
-                                    <div className="col-9">Remaining space:</div>
-                                    <div className="col-3 text-right info-value">0</div>
+                                    <div className="col-8">Remaining space:</div>
+                                    <div className="col-4 text-right info-value">{(shelters.capacity - shelters.occupancy).toLocaleString()}</div>
                                 </div>
                                 <div className="row">
                                     <div className="col-5">

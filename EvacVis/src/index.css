@@ -138,6 +138,14 @@ select.form-control {
 	width: auto;
 	z-index: 1;
 }
+.app-status {
+	right: 20px;
+	top: 50%;
+	width: auto;
+	left: auto;
+	z-index: 1;
+}
+
 .app-plots,
 .app-stats .btn-minimize,
 .app-stats .card-title,
@@ -191,6 +199,22 @@ dialog {
 		left: 20px;
 		bottom: 20px;
 	}
+	.app-status {
+		right: 20px;
+		top: 15em;
+		width: 150px;
+		left: auto;
+		z-index: 1;
+		background: transparent;
+		box-shadow: none;
+		padding: 0 0 0 1.5em;
+	}
+	.spinner-border {
+		position: absolute;
+		top: 0.25em;
+		left: 0;
+	}
+
 	.app-plots {
 		left: 380px;
 		z-index: 1;
@@ -514,6 +538,21 @@ select.form-control,
 .legend-panel .label {
 	fill: var(--legend-text);
 }
+.rv-discrete-color-legend-item.horizontal .rv-discrete-color-legend-item__title {
+	color: var(--body-text);
+}
+.app-plots .rv-discrete-color-legend-item.horizontal .rv-discrete-color-legend-item__title {
+	display: inline-block;
+	margin-left: 0.5em;
+}
+.rv-discrete-color-legend {
+	position: absolute;
+	top: -5em;
+	left: 20em;
+}
+/*.collapsed .rv-discrete-color-legend {
+	display: none;
+}*/
 
 /* [!] Disabled overlay */
 .app-options {

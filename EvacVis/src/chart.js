@@ -1,7 +1,7 @@
 // Modified based on https://vis.academy/#/building-a-geospatial-app/4-a-basic-chart
 
 import React, { Component } from 'react';
-import { LineSeries, FlexibleXYPlot, XAxis, YAxis } from 'react-vis';
+import { LineSeries, FlexibleXYPlot, XAxis, YAxis, DiscreteColorLegend } from 'react-vis';
 //import { max } from "d3";
 import PropTypes from 'prop-types';
 
@@ -49,8 +49,11 @@ export class Chart extends Component {
 
         // Data for vehidles that reached destination
         const arriveddata = plotdata2.ticks.map((k, i) => ({tick: Number(k), x: Number(k), y: plotdata2.arrived[i]}));
+        let arrivedy = Math.max(1200, (plotdata2.arrived.length ? plotdata2.arrived[plotdata2.arrived.length-1] : 0));
         //console.log('Arrived counts:');
-        //console.log(arriveddata);
+       // console.log(arrivedy);
+
+        const totaldata = plotdata2.ticks.map((k, i) => ({tick: Number(k), x: Number(k), y: plotdata2.totals[i]}));
 
         let className = collapsed ? "chart-panel card collapsed" : "chart-panel card expanded";
 
@@ -62,29 +65,39 @@ export class Chart extends Component {
                 <div className="card">
                     <div className="card-body">
                         <div className="row">
-                            <div className="col-md-4">
+                            <div className="col-md-12">
+                                <h2 className="card-title">Distribution Plots</h2>
+
+                                <div className="chart-container">
+                                    <FlexibleXYPlot
+                                        margin={{ left: 45, right: 0, top: 10, bottom: 25 }}
+                                        yDomain={[0,arrivedy]}
+                                    >
+                                        {!collapsed && <YAxis title="Vehicle number"/>}
+                                        {collapsed && <YAxis title="" tickValues={[0,arrivedy]}/>}
+                                        <LineSeries
+                                            style={{strokeLinejoin: "round"}}
+                                            color="#ff6865"
+                                            data={totaldata}
+                                        />
+                                        <LineSeries
+                                            style={{strokeLinejoin: "round"}}
+                                            color="#8ae8ff"
+                                            data={vehicledata}
+                                        />
+                                        <LineSeries
+                                            style={{strokeLinejoin: "round"}}
+                                            color="#9aba45"
+                                            data={arriveddata}
+                                        />
+                                        <XAxis title={collapsed ? "" : "Ticks"}/>
+                                        <DiscreteColorLegend orientation="horizontal" items={[{title: 'Vehicles on road', color: '#8ae8ff'}, {title: 'Destination reached', color: '#9aba45'}, {title: 'Evacuation demand', color: '#ff6865'}]}/>
+                                    </FlexibleXYPlot>
+                                </div>
+                            </div>
+                            {/*<div className="col-md-4">
                                 <h2 className="card-title">Vehicles on road</h2>
-                                {/*<h2>Demand per hour</h2>*/}
-                                {/*<XYPlot*/}
-                                {/*    margin={{ left: 40, right: 25, top: 10, bottom: 25 }}*/}
-                                {/*    height={200}*/}
-                                {/*    width={400}*/}
-                                {/*    yDomain={[0, 3000]}*/}
-                                {/*>*/}
-                                {/*    <YAxis />*/}
-                                {/*    <VerticalBarSeries*/}
-                                {/*        colorType="literal"*/}
-                                {/*        data={data}*/}
-                                {/*        style={{cursor: 'pointer'}}*/}
-                                {/*    />*/}
-                                {/*    <XAxis*/}
-                                {/*        tickFormat={h =>*/}
-                                {/*            h % 24 >= 12 ? (h % 12 || 12) + 'PM' : (h % 12 || 12) + 'AM'*/}
-                                {/*        }*/}
-                                {/*        tickSizeInner={0}*/}
-                                {/*        tickValues={[0, 12, 24, 36, 48, 60, 72, 84]}*/}
-                                {/*    />*/}
-                                {/*</XYPlot>*/}
+
                                 <div className="chart-container">
                                     <FlexibleXYPlot
                                         margin={{ left: 45, right: 0, top: 10, bottom: 25 }}
@@ -106,10 +119,10 @@ export class Chart extends Component {
                                 <div className="chart-container">
                                     <FlexibleXYPlot
                                         margin={{ left: 45, right: 0, top: 10, bottom: 25 }}
-                                        yDomain={[0,1200]}
+                                        yDomain={[0,arrivedy]}
                                     >
                                         {!collapsed && <YAxis title="Vehicle number"/>}
-                                        {collapsed && <YAxis title="" tickValues={[0,1200]}/>}
+                                        {collapsed && <YAxis title="" tickValues={[0,arrivedy]}/>}
                                         <LineSeries
                                             style={{strokeLinejoin: "round"}}
                                             data={arriveddata}
@@ -130,12 +143,12 @@ export class Chart extends Component {
                                         {collapsed && <YAxis title="" tickValues={[0,1200]}/>}
                                         <LineSeries
                                             style={{strokeLinejoin: "round"}}
-                                            data={vehicledata}
+                                            data={totaldata}
                                         />
                                         <XAxis title={collapsed ? "" : "Ticks"}/>
                                     </FlexibleXYPlot>
                                 </div>
-                            </div>
+                            </div>*/}
                         </div>
                     </div>
                 </div>

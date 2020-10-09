@@ -22,6 +22,8 @@ import car4 from "../res/car4.png";
 import car2 from "../res/car2.png";
 import PinOrigin from "!file-loader!../res/pin_red.svg";
 import PinDestination from "!file-loader!../res/pin_blue.svg";
+import ShelterFull from "!file-loader!../res/shelter_full.svg";
+import ShelterOpen from "!file-loader!../res/shelter_open.svg";
 
 // const { promisify } = require('util')
 
@@ -42,6 +44,8 @@ const initialViewState = {
 //initialize link dictionary
 const linkdict = new Map();
 let linkData = [];
+let shelteropenData = [];
+let shelterfullData = [];
 /*for (var i = 0; i<linkData['features'].length; i++) {
   linkdict.set(linkData['features'][i]['properties']['Id'],0);
 }*/
@@ -119,9 +123,16 @@ class App extends Component{
     this.state = {
       plotdata: {
         hour:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
-        counts:[1286, 1307, 1264, 1243, 1365, 1346, 1402, 290, 273, 310, 326, 320, 298, 306, 293, 294, 306, 310, 260, 482, 451, 417, 439, 411]
+        counts:[1286, 1307, 1264, 1243, 1365, 1346, 1402, 290, 273, 310, 326, 320, 298, 306, 293, 294, 306, 310, 260, 482, 451, 417, 439, 411],
+        arrived:[0, 0, 0, 0, 0, 5, 6, 7, 8, 9, 10, 11, 12, 12, 12, 12, 16, 17, 18, 19, 20, 20, 22, 23],
+        total:[1286, 1307, 1307, 1307, 1365, 1365, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402, 1402]
       },
-      plotdata2: {ticks:[0], counts:[0], arrived:[0]},
+      plotdata2: {
+        ticks:[0],
+        counts:[0],
+        arrived:[0],
+        totals:[0]
+      },
       arrived: 0,
       connected: false, // whether or not connect to the server
       synchronized: false, // false: asynchronized mode, loading data from the file directories, true: loading data directly from returned messages
@@ -134,9 +145,16 @@ class App extends Component{
       subdata: [], //new data
       currentdata: [], //data for real time display
       vehicles1: [],
+      vehicles1speed: 0,
       vehicles2: [],
+      vehicles2speed: 0,
+      vehicles: [],
       roadspeed: linkdict,//new Map(linkdict),
       roadcount: linkdict,//new Map(linkdict),
+      shelters: {
+        occupancy: 0,
+        capacity: 0
+      },
       data_address: null,
       maximal_time: 3e6, //maximal ticks
       options: {
@@ -210,12 +228,55 @@ class App extends Component{
       resetCurrentTime: this.resetCurrentTime
     });
 
+    document.querySelector('.app-status').classList.remove('d-none');
+
+    let loaded = 0;
+    const that = this;
+
     import('../res/road.json')
       .then(data => {
         for (var i = 0; i<data['features'].length; i++) {
           linkdict.set(data['features'][i]['properties']['Id'],0);
         }
         linkData = data;
+
+        loaded++;
+
+        if (loaded == 2) {
+          document.querySelector('.app-status').classList.add('d-none');
+        }
+      })
+      .catch(error => error.code + ': An error occurred while loading the component');
+
+    import('../res/shelters.json')
+      .then(function(data) {
+        //shelteropenData = data.features.filter(d => { return d.properties.CapReporte < d.properties.CapPersons; });
+        //shelterfullData = data.features.filter(d => { return d.properties.CapReporte >= d.properties.CapPersons; });
+        let occupants = 0;
+        let capacit = 0;
+
+        for (var i = 0; i<data['features'].length; i++) {
+          if (!isNaN(data['features'][i].properties.CapReporte)) {
+            occupants += parseInt(data['features'][i].properties.CapReporte);
+          }
+          if (!isNaN(data['features'][i].properties.CapPersons)) {
+            capacit += parseInt(data['features'][i].properties.CapPersons);
+          }
+
+          if (data['features'][i].properties.CapReporte < data['features'][i].properties.CapPersons) {
+            shelteropenData.push(data['features'][i]);
+          } else {
+            shelterfullData.push(data['features'][i]);
+          }
+        }
+
+        that.setState({shelters: {occupancy: occupants, capacity: capacit}});
+
+        loaded++;
+
+        if (loaded == 2) {
+          document.querySelector('.app-status').classList.add('d-none');
+        }
       })
       .catch(error => error.code + ': An error occurred while loading the component');
   }
@@ -489,7 +550,7 @@ class App extends Component{
     this.last_time = this.current_time; // Update_time
     this.timer = null;
     this.currentFrame = null;
-    this.setState({plotdata2:{ticks:[], counts:[], arrived:[]}}, ()=>this.restartAnimation());
+    this.setState({plotdata2:{ticks:[], counts:[], arrived:[], totals:[]}}, ()=>this.restartAnimation());
   }
 
   // Core functions for visualizing trajectories
@@ -587,8 +648,19 @@ class App extends Component{
                   interpolatePos: d3.geoInterpolate([d[1], d[2]], [d[3], d[4]])
                 }))
           }, () => {
+            let avg = 0;
+            for (var i = 0; i<this.state.vehicles2.length; i++) {
+              avg += this.state.vehicles2[i].speed;//console.log(this.state.vehicles.indexOf(this.state.vehicles2[i].id));
+              if (this.state.vehicles.indexOf(this.state.vehicles2[i].id) == -1) {
+                this.state.vehicles.push(this.state.vehicles2[i].id);
+              }
+            }
+            this.setState({ vehicles2speed: Math.round(avg / this.state.vehicles2.length) });
             this.state.plotdata2.ticks.push(this.current_time);
+            //let prev = this.state.plotdata2.totals.length > 0 ? this.state.plotdata2.totals[this.state.plotdata2.totals.length-1] : 0;
             this.state.plotdata2.counts.push(this.state.vehicles2.length);
+            //this.state.plotdata2.totals.push(this.state.vehicles2.length > prev ? this.state.vehicles2.length : prev);
+            this.state.plotdata2.totals.push(this.state.vehicles.length);
             let a = this.state.vehicles2.filter(v => {
               return v.nearlyArrived > 0;//v.lon == v.destx && v.lat == v.desty;
             });
@@ -619,8 +691,19 @@ class App extends Component{
                   bearing: getDirection(d[1], d[2], d[3], d[4]),
                   interpolatePos: d3.geoInterpolate([d[1], d[2]], [d[3], d[4]])
                 }))}, ()=> {
+            let avg = 0;
+            for (var i = 0; i<this.state.vehicles1.length; i++) {
+              avg += this.state.vehicles1[i].speed;
+              if (this.state.vehicles.indexOf(this.state.vehicles1[i].id) == -1) {
+                this.state.vehicles.push(this.state.vehicles1[i].id);
+              }
+            }
+            this.setState({ vehicles1speed: Math.round(avg / this.state.vehicles1.length) });
             this.state.plotdata2.ticks.push(this.current_time);
+            //let prev = this.state.plotdata2.totals.length > 0 ? this.state.plotdata2.totals[this.state.plotdata2.totals.length-1] : 0;
             this.state.plotdata2.counts.push(this.state.vehicles1.length);
+            //this.state.plotdata2.totals.push(this.state.vehicles1.length > prev ? this.state.vehicles1.length : prev);
+            this.state.plotdata2.totals.push(this.state.vehicles.length);
             let a = this.state.vehicles1.filter(v => {
               return v.nearlyArrived > 0;//v.lon == v.destx && v.lat == v.desty;
             });
@@ -635,8 +718,8 @@ class App extends Component{
       else {
         // The internet speed does not support this visualization speed, let's make the speed lower and reload the visualization
         this.fail_count+=1
-        console.log("Piece 2 take care of this update.");
-        console.log(this.current_time)
+        //console.log("Piece 2 take care of this update.");
+        //console.log(this.current_time)
         if (this.fail_count>5) {
           this.fail_count=0;
           this.restartAnimation(); // Fail to load data, skip the current tick
@@ -844,6 +927,42 @@ class App extends Component{
             getPosition: d => [d.lon, d.lat],
             getIcon: () => "vehicle",
             getAngle: d => d.bearing-90,
+          }),
+          new IconLayer({
+            id: 'scatterplot-shelters-available',
+            data: shelteropenData, //.filter(d => { return d.properties.CapReporte < d.properties.CapPersons; }),
+            //visible: 1,
+            pickable: true,
+            iconAtlas: ShelterOpen,
+            iconMapping:{
+              shelter:{
+                x: 0,
+                y: 0,
+                width: 640,
+                height: 512
+              }
+            },
+            sizeScale: 20,
+            getPosition: d => [d.properties.Lon, d.properties.Lat],
+            getIcon: () => "shelter"
+          }),
+          new IconLayer({
+            id: 'scatterplot-shelters-full',
+            data: shelterfullData, //.filter(d => { return d.properties.CapReporte < d.properties.CapPersons; }),
+            //visible: 1,
+            pickable: true,
+            iconAtlas: ShelterFull,
+            iconMapping:{
+              shelter:{
+                x: 0,
+                y: 0,
+                width: 640,
+                height: 512
+              }
+            },
+            sizeScale: 20,
+            getPosition: d => [d.properties.Lon, d.properties.Lat],
+            getIcon: () => "shelter"
           })
         ])
       }
@@ -1003,15 +1122,15 @@ class App extends Component{
               </li>
             </ul>
             <div className="tab-content" id="app-tabContent">
-            <Client {...this.state} />
-            <LayerControls
+              <Client {...this.state} />
+              <LayerControls
                 title="Options"
                 settings={this.state.settings}
                 propTypes={TRIPS_CONTROLS}
                 onChange={settings => this._updateLayerSettings(settings)}
                 currentTime={Math.ceil((this.current_time+ this.buffer_time*this.currentFrame/ (this.framesPerTick-this.state.settings.speed)))}
                 resetCurrentTime = {this.resetCurrentTime}
-            />
+              />
             </div>
           </div>
           <div className="app-pane app-stats">
@@ -1019,6 +1138,9 @@ class App extends Component{
           </div>
           <div className="app-pane app-plots">
             <Chart {...this.state} />
+          </div>
+          <div className="app-pane app-status d-none">
+            <span className="spinner-border spinner-border-sm" role="status"></span> <span className="app-status-message">Loading data...</span>
           </div>
           <Legend {...this.state} />
           <Toast
