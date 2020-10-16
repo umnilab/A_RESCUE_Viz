@@ -14,6 +14,7 @@ import {Panel} from "./panel";
 import {Legend} from "./legend";
 import {Client} from "./client"
 import {Chart} from "./chart";
+import {Interface} from "./interface";
 import Toast from "./toast";
 import {scaleThreshold} from 'd3-scale';
 
@@ -133,6 +134,7 @@ class App extends Component{
         arrived:[0],
         totals:[0]
       },
+      theme: "auto",
       arrived: 0,
       connected: false, // whether or not connect to the server
       synchronized: false, // false: asynchronized mode, loading data from the file directories, true: loading data directly from returned messages
@@ -194,6 +196,7 @@ class App extends Component{
     this.connectServer = this.connectServer.bind(this);
     this.loadHistory = this.loadHistory.bind(this);
     this.loadNow = this.loadNow.bind(this);
+    this.updateTheme = this.updateTheme.bind(this);
     this.updateConfigOptions = this.updateConfigOptions.bind(this);
     this.disConnectServer = this.disConnectServer.bind(this);
     this.synchronizeController = this.synchronizeController.bind(this);
@@ -227,6 +230,10 @@ class App extends Component{
       upDateMaximalTime: this.upDateMaximalTime,
       resetCurrentTime: this.resetCurrentTime
     });
+
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      this.setState({theme: "dark"});
+    }
 
     document.querySelector('.app-status').classList.remove('d-none');
 
@@ -298,9 +305,10 @@ class App extends Component{
       const updateCurrentTick = this.updateCurrentTick;
 
       // Connection established
-      that.setState({connected: true});
+      //that.setState({connected: true});
 
       ws.addEventListener('error', function() {
+        that.setState({connected: false});
         that.setState({messages: [...that.state.messages, {
           id: Math.floor((Math.random() * 101) + 1),
           title: 'Error',
@@ -344,6 +352,7 @@ class App extends Component{
             reason = 'The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can\'t be verified).';
         }
 
+        that.setState({connected: false});
         that.setState({messages: [...that.state.messages, {
           id: Math.floor((Math.random() * 101) + 1),
           title: 'Error',
@@ -530,6 +539,11 @@ class App extends Component{
         this.setState({data_url: dir+'/instance_0', prefix: file_names[0]}, ()=> this.resetCurrentTime())
       })
     });
+  }
+
+  //  For controls.js
+  updateTheme(value) {
+    this.setState({theme:value},()=>console.log(this.state.theme))
   }
 
   //  For controls.js
@@ -1092,10 +1106,13 @@ class App extends Component{
       }))
     }
 
+    document.getElementsByTagName('body')[0].className = this.state.theme;
+
     let staticMap;
-    staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}/>;
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    if (this.state.theme == "dark"){ // || (this.state.theme == "auto" && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN} mapStyle="mapbox://styles/mapbox/dark-v9"/>;
+    } else {
+      staticMap = <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN}/>;
     }
 
     let className = this.state.loaded ? 'app-body loaded' : 'app-body';
@@ -1132,6 +1149,9 @@ class App extends Component{
                 resetCurrentTime = {this.resetCurrentTime}
               />
             </div>
+              <Interface {...this.state}
+                onChange={this.updateTheme}
+                />
           </div>
           <div className="app-pane app-stats">
             <Panel {...this.state} />
