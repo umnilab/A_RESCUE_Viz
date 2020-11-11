@@ -669,7 +669,7 @@ class App extends Component{
                 this.state.vehicles.push(this.state.vehicles2[i].id);
               }
             }
-            this.setState({ vehicles2speed: Math.round(avg / this.state.vehicles2.length) });
+              this.setState({ vehicles2speed: Math.round(avg * 3.6 / this.state.vehicles2.length) });
             this.state.plotdata2.ticks.push(this.current_time);
             //let prev = this.state.plotdata2.totals.length > 0 ? this.state.plotdata2.totals[this.state.plotdata2.totals.length-1] : 0;
             this.state.plotdata2.counts.push(this.state.vehicles2.length);
@@ -712,7 +712,7 @@ class App extends Component{
                 this.state.vehicles.push(this.state.vehicles1[i].id);
               }
             }
-            this.setState({ vehicles1speed: Math.round(avg / this.state.vehicles1.length) });
+              this.setState({ vehicles1speed: Math.round(avg * 3.6 / this.state.vehicles1.length) });
             this.state.plotdata2.ticks.push(this.current_time);
             //let prev = this.state.plotdata2.totals.length > 0 ? this.state.plotdata2.totals[this.state.plotdata2.totals.length-1] : 0;
             this.state.plotdata2.counts.push(this.state.vehicles1.length);
@@ -1157,7 +1157,8 @@ class App extends Component{
             <Panel {...this.state} />
           </div>
           <div className="app-pane app-plots">
-            <Chart {...this.state} />
+            <Chart {...this.state} 
+              roadData={linkData} />
           </div>
           <div className="app-pane app-status d-none">
             <span className="spinner-border spinner-border-sm" role="status"></span> <span className="app-status-message">Loading data...</span>

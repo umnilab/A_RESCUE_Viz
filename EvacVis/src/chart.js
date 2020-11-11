@@ -17,11 +17,11 @@ export class Chart extends Component {
 
     togglePanel() {
         this.setState({ collapsed: this.state.collapsed ? false : true });
-        document.resize();
+        //document.resize();
     }
 
     render() {
-        const { plotdata2 } = this.props;//plotdata, plotdata2
+        const { plotdata2, roadspeed, roadcount, roadData } = this.props;//plotdata, plotdata2
 
         let collapsed = this.state.collapsed;
 
@@ -37,6 +37,29 @@ export class Chart extends Component {
                 </div>
             );
         }
+
+        // Gather some road data
+        const linkdict = new Map();
+        if (typeof roadData['features'] !== 'undefined') {
+            for (var i = 0; i < roadData['features'].length; i++) {
+                linkdict.set(roadData['features'][i]['properties']['Id'], roadData['features'][i]['properties']['length']);
+            }
+        }
+        // Sort by road speed and take the top N items
+        const roadspeedSorted = new Map([...roadspeed.entries()].sort((a, b) => b[1] - a[1]));
+
+        let rows = [], topten;
+        topten = Array.from(roadspeedSorted).slice(0, 6);
+        topten.forEach((item, key) => {
+            rows.push(
+                <tr key={item[0]}>
+                    <td>{item[0]}</td>
+                    <td className="text-right">{linkdict.get(item[0]).toFixed(1)} m</td>
+                    <td className="text-right">{(item[1] > 0 ? (item[1] * 3.6 / roadcount.get(item[0])).toFixed(2) : 0)} km/h</td>
+                </tr>
+            );
+        });
+
         // Raw data
         //console.log('Plotdata2:');
         //console.log(plotdata2);
@@ -65,7 +88,7 @@ export class Chart extends Component {
                 <div className="card">
                     <div className="card-body">
                         <div className="row">
-                            <div className="col-md-12">
+                            <div className="col-md-8">
                                 <h2 className="card-title">Distribution Plots</h2>
 
                                 <div className="chart-container">
@@ -95,60 +118,24 @@ export class Chart extends Component {
                                     </FlexibleXYPlot>
                                 </div>
                             </div>
-                            {/*<div className="col-md-4">
-                                <h2 className="card-title">Vehicles on road</h2>
-
-                                <div className="chart-container">
-                                    <FlexibleXYPlot
-                                        margin={{ left: 45, right: 0, top: 10, bottom: 25 }}
-                                        yDomain={[0,1200]}
-                                    >
-                                        {!collapsed && <YAxis title="Vehicle number"/>}
-                                        {collapsed && <YAxis title="" tickValues={[0,1200]}/>}
-                                        <LineSeries
-                                            style={{strokeLinejoin: "round"}}
-                                            data={vehicledata}
-                                        />
-                                        <XAxis title={collapsed ? "" : "Ticks"}/>
-                                    </FlexibleXYPlot>
+                            <div className="col-md-4">
+                                <h2 className="card-title">Fastest Roads</h2>
+                                <div className="info-groups">
+                                <table className="table table-hover table-bordered">
+                                    <caption className="sr-only">Fastest 10 roads</caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Road ID</th>
+                                            <th scope="col" className="text-right">Length</th>
+                                            <th scope="col" className="text-right">Speed</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {rows}
+                                    </tbody>
+                                </table>
                                 </div>
                             </div>
-                            <div className="col-md-4">
-                                <h2 className="card-title">Destination reached</h2>
-
-                                <div className="chart-container">
-                                    <FlexibleXYPlot
-                                        margin={{ left: 45, right: 0, top: 10, bottom: 25 }}
-                                        yDomain={[0,arrivedy]}
-                                    >
-                                        {!collapsed && <YAxis title="Vehicle number"/>}
-                                        {collapsed && <YAxis title="" tickValues={[0,arrivedy]}/>}
-                                        <LineSeries
-                                            style={{strokeLinejoin: "round"}}
-                                            data={arriveddata}
-                                        />
-                                        <XAxis title={collapsed ? "" : "Ticks"}/>
-                                    </FlexibleXYPlot>
-                                </div>
-                            </div>
-                            <div className="col-md-4">
-                                <h2 className="card-title">Evacuation demand</h2>
-
-                                <div className="chart-container">
-                                    <FlexibleXYPlot
-                                        margin={{ left: 45, right: 0, top: 10, bottom: 25 }}
-                                        yDomain={[0,1200]}
-                                    >
-                                        {!collapsed && <YAxis title="Vehicle number"/>}
-                                        {collapsed && <YAxis title="" tickValues={[0,1200]}/>}
-                                        <LineSeries
-                                            style={{strokeLinejoin: "round"}}
-                                            data={totaldata}
-                                        />
-                                        <XAxis title={collapsed ? "" : "Ticks"}/>
-                                    </FlexibleXYPlot>
-                                </div>
-                            </div>*/}
                         </div>
                     </div>
                 </div>

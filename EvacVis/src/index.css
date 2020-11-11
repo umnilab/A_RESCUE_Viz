@@ -48,6 +48,30 @@ h2 {
 	margin-top: 0;
 	font-size: 1rem;
 }
+.table {
+	margin-top: 2em;
+	font-size: 0.875rem;
+}
+.table td,
+.table th {
+	padding: .25rem;
+	color: var(--body-text);
+	border-top: 1px solid var(--input-border);
+}
+.table thead th {
+	border-bottom: 2px solid var(--input-border);
+}
+.table-bordered,
+.table-bordered td,
+.table-bordered th {
+	border: 1px solid var(--input-border);
+}
+.collapsed .table tr {
+	display: none;
+}
+.collapsed .table tr:first-child {
+	display: table-row;
+}
 button svg {
 	height: 1em;
 	fill: none;
@@ -524,6 +548,9 @@ select.form-control,
 .info-group .row:first-child {
 	border-top: none;
 }
+.info-group .table {
+	margin: 0;
+}
 
 /* [!] Misc. */
 .spinner {
@@ -549,8 +576,8 @@ select.form-control,
 }
 .rv-discrete-color-legend {
 	position: absolute;
-	top: -5em;
-	left: 20em;
+	top: -4.5em;
+	left: 14em;
 }
 /*.collapsed .rv-discrete-color-legend {
 	display: none;

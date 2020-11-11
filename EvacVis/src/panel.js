@@ -121,7 +121,7 @@ export class Panel extends Component {
                             </div>
                         </div>
                         <div className="col-3 col-sm-3 col-md-3">
-                            <h4 className="card-title">Selected Link</h4>
+                            <h4 className="card-title">Selected Road</h4>
 
                             <div className="icon-wrap icon-road">
                                 <span className="icon">
@@ -132,11 +132,11 @@ export class Panel extends Component {
 
                             <div className="info-group container-fluid">
                                 <div className="row">
-                                    <div className="col-6">Link ID:</div>
+                                    <div className="col-6">Road ID:</div>
                                     <div className="col-6 text-right info-value">{selected_link ? selected_link.Id : '--'}</div>
                                 </div>
                                 <div className="row">
-                                    <div className="col-7">Link length:</div>
+                                    <div className="col-7">Road length:</div>
                                     <div className="col-5 text-right info-value">{selected_link ? selected_link.length.toFixed(1) : 0} m</div>
                                 </div>
                                 <div className="row">
