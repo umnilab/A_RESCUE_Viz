@@ -21,7 +21,7 @@ export class Chart extends Component {
     }
 
     render() {
-        const { plotdata2, roadspeed, roadcount, roadData } = this.props;//plotdata, plotdata2
+        const { plotdata2, roads, roadData } = this.props;//plotdata, plotdata2
 
         let collapsed = this.state.collapsed;
 
@@ -39,27 +39,34 @@ export class Chart extends Component {
         }
 
         // Gather some road data
+        const roadspeed = new Map();
         const linkdict = new Map();
-        if (typeof roadData['features'] !== 'undefined') {
+        roads.forEach((value,key) => {
+            roadspeed.set(key, value.speed);
+        });
+
+        let rows = [], topten;
+
+        if(roadData['features'] != null){
             for (var i = 0; i < roadData['features'].length; i++) {
                 linkdict.set(roadData['features'][i]['properties']['Id'], roadData['features'][i]['properties']['length']);
             }
+            // Sort by road speed and take the top N items
+            const roadspeedSorted = new Map([...roadspeed.entries()].sort((a, b) => b[1] - a[1]));
+
+            //console.log(roadspeedSorted);
+
+            topten = Array.from(roadspeedSorted).slice(0, 6);
+            topten.forEach((item, key) => {
+                rows.push(
+                    <tr key={item[0]}>
+                        <td>{item[0]}</td>
+                        <td className="text-right">{linkdict.get(item[0]).toFixed(1)} m</td>
+                        <td className="text-right">{(item[1] > 0 ? (item[1]*2.2374).toFixed(1) : 0)} mph</td>
+                    </tr>
+                );
+            });
         }
-        // Sort by road speed and take the top N items
-        const roadspeedSorted = new Map([...roadspeed.entries()].sort((a, b) => b[1] - a[1]));
-
-        let rows = [], topten;
-        topten = Array.from(roadspeedSorted).slice(0, 6);
-        topten.forEach((item, key) => {
-            rows.push(
-                <tr key={item[0]}>
-                    <td>{item[0]}</td>
-                    <td className="text-right">{linkdict.get(item[0]).toFixed(1)} m</td>
-                    <td className="text-right">{(item[1] > 0 ? (item[1] * 3.6 / roadcount.get(item[0])).toFixed(2) : 0)} km/h</td>
-                </tr>
-            );
-        });
-
         // Raw data
         //console.log('Plotdata2:');
         //console.log(plotdata2);
@@ -72,7 +79,7 @@ export class Chart extends Component {
 
         // Data for vehidles that reached destination
         const arriveddata = plotdata2.ticks.map((k, i) => ({tick: Number(k), x: Number(k), y: plotdata2.arrived[i]}));
-        let arrivedy = Math.max(1200, (plotdata2.arrived.length ? plotdata2.arrived[plotdata2.arrived.length-1] : 0));
+        let arrivedy = Math.max(1200, (plotdata2.totals.length ? plotdata2.arrived[plotdata2.totals.length-1] : 0));
         //console.log('Arrived counts:');
        // console.log(arrivedy);
 

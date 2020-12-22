@@ -23,7 +23,7 @@ export class Panel extends Component {
     }
 
     render() {
-        const {vehicles1, vehicles1speed, vehicles2, vehicles2speed, selected_vehicle, selected_link, shelters} = this.props;
+        const {vehicles1, vehicles2, avgspeed, selected_vehicle, selected_link, shelters} = this.props;
 
         let collapsed = this.state.collapsed;
         let className = collapsed ? "info-panel card collapsed" : "info-panel card expanded";
@@ -54,7 +54,7 @@ export class Panel extends Component {
                                 </div>
                                 <div className="row">
                                     <div className="col-7">Avg. speed:</div>
-                                    <div className="col-5 text-right info-value">{Math.max(vehicles1speed,vehicles2speed)} km/h</div>
+                                    <div className="col-5 text-right info-value">{(avgspeed*2.2374).toFixed(1)} mph</div>
                                 </div>
                                 {/*<div className="row">
                                     <div className="col-6">
@@ -141,7 +141,7 @@ export class Panel extends Component {
                                 </div>
                                 <div className="row">
                                     <div className="col-7">Speed limit:</div>
-                                    <div className="col-5 text-right info-value">{selected_link ? selected_link.freeflowsp : 0} km/h</div>
+                                    <div className="col-5 text-right info-value">{selected_link ? selected_link.freeflowsp : 0} mph</div>
                                 </div>
                             </div>
                         </div>

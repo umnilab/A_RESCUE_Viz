@@ -27,7 +27,7 @@ export const TRIPS_CONTROLS = {
   speed: {
     displayName: 'Play speed',
     type: 'range',
-    value: 0,
+    value: 30,
     step: 10,
     min: 0,
     max: 50

@@ -21,8 +21,8 @@ import {scaleThreshold} from 'd3-scale';
 //import linkData from '../res/road.json';
 import car4 from "../res/car4.png";
 import car2 from "../res/car2.png";
-import PinOrigin from "!file-loader!../res/pin_red.svg";
-import PinDestination from "!file-loader!../res/pin_blue.svg";
+import PinOrigin from "!file-loader!../res/pin_red.png";
+import PinDestination from "!file-loader!../res/pin_blue.png";
 import ShelterFull from "!file-loader!../res/shelter_full.svg";
 import ShelterOpen from "!file-loader!../res/shelter_open.svg";
 
@@ -44,8 +44,10 @@ const initialViewState = {
 
 //initialize link dictionary
 const linkdict = new Map();
-let linkData = [];
-let shelteropenData = [];
+let zonelist = [];
+let linklist = [];
+// let zoneData = [];
+let shelteropenData = []; // Let the shelter temporally unchanged
 let shelterfullData = [];
 /*for (var i = 0; i<linkData['features'].length; i++) {
   linkdict.set(linkData['features'][i]['properties']['Id'],0);
@@ -64,14 +66,14 @@ export const COLOR_SCALE = scaleThreshold()
     ]);
 
 
-// Get direction based on start and end location.
-function getDirection(lon1, lat1, lon2, lat2) {
-  var toRadians = function(v) { return v * Math.PI / 180; };
-  var toDegrees = function(v) { return v * 180 / Math.PI; };
-  var angleRadians = Math.atan2(lat2 - lat1, lon2 - lon1);
-  var angleDegree = toDegrees(angleRadians)
-  return angleDegree
-}
+// Get direction based on start and end location, this function is not needed anymore.
+// function getDirection(lon1, lat1, lon2, lat2) {
+//   var toRadians = function(v) { return v * Math.PI / 180; };
+//   var toDegrees = function(v) { return v * 180 / Math.PI; };
+//   var angleRadians = Math.atan2(lat2 - lat1, lon2 - lon1);
+//   var angleDegree = toDegrees(angleRadians)
+//   return angleDegree
+// }
 
 // Sleep function for waiting data transferring.
 function sleep(ms) {
@@ -122,7 +124,7 @@ class App extends Component{
     super(props);
 
     this.state = {
-      plotdata: {
+      plotdata: { // plotdata is for debugging
         hour:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
         counts:[1286, 1307, 1264, 1243, 1365, 1346, 1402, 290, 273, 310, 326, 320, 298, 306, 293, 294, 306, 310, 260, 482, 451, 417, 439, 411],
         arrived:[0, 0, 0, 0, 0, 5, 6, 7, 8, 9, 10, 11, 12, 12, 12, 12, 16, 17, 18, 19, 20, 20, 22, 23],
@@ -135,7 +137,6 @@ class App extends Component{
         totals:[0]
       },
       theme: "auto",
-      arrived: 0,
       connected: false, // whether or not connect to the server
       synchronized: false, // false: asynchronized mode, loading data from the file directories, true: loading data directly from returned messages
       loaded: false, // whether or not history is loaded
@@ -143,20 +144,17 @@ class App extends Component{
       prefix: null,
       dialog: false,
       messages: [], // messages (errors, success, etc)
-      data: [], //current data
-      subdata: [], //new data
-      currentdata: [], //data for real time display
-      vehicles1: [],
-      vehicles1speed: 0,
-      vehicles2: [],
-      vehicles2speed: 0,
-      vehicles: [],
-      roadspeed: linkdict,//new Map(linkdict),
-      roadcount: linkdict,//new Map(linkdict),
+      arrived: 0, // number of arrived vehicles
+      total: 0, // number of generated vehicles
+      vehicles: new Map(),
+      roads: linkdict,
       shelters: {
         occupancy: 0,
         capacity: 0
       },
+      vehicles1: [], // for rendering the layer
+      vehicles2: [], // for rendering the layer
+      avgspeed: 0, // average speed by vehicle
       data_address: null,
       maximal_time: 3e6, //maximal ticks
       options: {
@@ -243,13 +241,13 @@ class App extends Component{
     import('../res/road.json')
       .then(data => {
         for (var i = 0; i<data['features'].length; i++) {
-          linkdict.set(data['features'][i]['properties']['Id'],0);
+          linkdict.set(data['features'][i]['properties']['Id'],{speed:13.508, count:0});
         }
-        linkData = data;
+        linklist = data;
 
         loaded++;
 
-        if (loaded == 2) {
+        if (loaded == 3) {
           document.querySelector('.app-status').classList.add('d-none');
         }
       })
@@ -257,8 +255,8 @@ class App extends Component{
 
     import('../res/shelters.json')
       .then(function(data) {
-        //shelteropenData = data.features.filter(d => { return d.properties.CapReporte < d.properties.CapPersons; });
-        //shelterfullData = data.features.filter(d => { return d.properties.CapReporte >= d.properties.CapPersons; });
+        // shelteropenData = data.features.filter(d => { return d.properties.CapReporte < d.properties.CapPersons; });
+        // shelterfullData = data.features.filter(d => { return d.properties.CapReporte >= d.properties.CapPersons; });
         let occupants = 0;
         let capacit = 0;
 
@@ -281,13 +279,23 @@ class App extends Component{
 
         loaded++;
 
-        if (loaded == 2) {
+        if (loaded == 3) {
           document.querySelector('.app-status').classList.add('d-none');
         }
       })
       .catch(error => error.code + ': An error occurred while loading the component');
-  }
 
+    import('../res/cbgs_centroid.json').then(function(data) {
+      for (var i = 0; i < data['features'].length; i++){
+        zonelist.push(data['features'][i])
+      }
+      loaded++;
+
+      if (loaded == 3) {
+        document.querySelector('.app-status').classList.add('d-none');
+      }
+    }).catch()
+  }
 
   // Client control
   connectServer() {
@@ -568,6 +576,7 @@ class App extends Component{
   }
 
   // Core functions for visualizing trajectories
+  // Change the data processing here
   restartAnimation() {
     if (this.timer) {
       this.timer.stop();
@@ -590,7 +599,8 @@ class App extends Component{
   }
 
   //'vehicleID', 'startx', 'starty','endx','endy', 'speed', 'originx','originy','destx','desty', 'nearlyArrived', 'type'
-  //'vehicleClass', 'roadID'
+  //'vehicleClass', 'roadID'\
+  // new data processing code here.
   fetchData=(current_time) => {
     this.setState({data: this.state.subdata}, () => {
       this.last_time += this.time_step;
@@ -603,186 +613,205 @@ class App extends Component{
         }
       }
       this.startAnimation();
+      // LZ: new data processing code here
       d3.json(this.state.data_url+"/"+this.state.prefix+"."+((current_time)/40+1)+".json")
         .then(
-          (new_data) => this.setState({subdata: new_data},
-              () => {console.log("fetching data")}))
+          (new_data) => this.setState({subdata: new_data}))
         .catch(
           () => {
             this.setState({messages: [...this.state.messages, {
               id: Math.floor((Math.random() * 101) + 1),
               title: 'Error',
-              description: 'Failed to load JSON file: ' + this.state.data_url+"/"+this.state.prefix+"."+((current_time)/40+1)+".json",
+              description: 'Failed to load  JSON file: ' + this.state.data_url+"/"+this.state.prefix+"."+((current_time)/40+1)+".json",
               type: 'danger'
             }]});
         });
     });
-  };
+  }
+
+  succeed = true;
+
+  // Process the data per 20 ticks
+  processData = async (tick) => {
+    // console.log("Processing data");
+    // console.log(tick);
+    let {vehicles, roads, shelters, arrived, total} = this.state;
+    let total_v = 0; // For calculating avg speed
+    if(this.state.data[tick]){
+      // Update vehicle data, features include: startID, endID, segment[x1, y1, x2, y2], bearing
+      this.state.data[tick].newVehs.forEach((newVeh)=>{
+        let fields = newVeh.split(',');
+        vehicles.set(Number(fields[0]), {startID: Number(fields[1]),
+          endID: Number(fields[2]),
+          x1: 0,
+          x2: 0,
+          y1: 0,
+          y2: 0,
+          speed: 0,
+          bearing: 0});
+        total+=1;
+      });
+
+      vehicles.forEach((v) =>{
+        // Rolling the (x2,y2) to (x1,y1)
+        v.x1 = v.x2;
+        v.y1 = v.y2;
+        v.speed = 0;
+      });
+
+      this.state.data[tick].vehicles.forEach((veh)=>{
+        let fields = veh.split(',');
+        let v = vehicles.get(Number(fields[0]));
+        // Update x2, y2
+        v.x2 = Number(fields[1]);
+        v.y2 = Number(fields[2]);
+        v.speed = Number(fields[3]);
+        v.bearing = Number(fields[4]);
+        total_v += Number(fields[3]);
+      });
+
+      // Update road data, features include: ID, num_vehicle, speed
+      this.state.data[tick].roads.forEach((road)=>{
+        let fields = road.split(',');
+        let r = roads. get(Number(fields[0]));
+        r.count = Number(fields[1]);
+        r.speed = Number(fields[2]);
+      });
+      // Update shelter data, do not need to consider right now
+
+      // Updated the numOfArrived vehicles
+      this.state.data[tick].arrVehs.forEach((arrVeh)=>{
+        vehicles.delete(Number(arrVeh));
+        arrived += 1;
+      });
+    }
+
+    // create the data for vehicle layer
+    this.fail_count = 0; // refresh the fail count
+    this.state.roads = roads;
+    this.state.shelters = shelters;
+    this.state.total = total;
+    this.state.arrived = arrived;
+    this.state.vehicles = vehicles;
+    this.state.avgspeed = total_v/(vehicles.size+1e-6);
+    if (this.state.subswitch) {
+      this.state.subswitch = 1 - this.state.subswitch
+      this.state.vehicles2 =
+            Array.from(vehicles).map(([key, value]) => ({
+              id: key,
+              lon: value.x1,
+              lat: value.y1,
+              speed: value.speed,
+              bearing: value.bearing,
+              origin: value.startID,
+              destination: value.endID,
+              interpolatePos: d3.geoInterpolate([value.x1, value.y1],
+                  [value.x2, value.y2])
+            }));
+      // if (this.state.vehicles2 == null) {
+      //   this.state.vehicles2 = [];
+      // }
+    } else {
+      this.state.subswitch = 1 - this.state.subswitch
+      this.state.vehicles1 =
+          Array.from(vehicles).map(([key, value]) => ({
+            id: key,
+            lon: value.x1,
+            lat: value.y1,
+            speed: value.speed,
+            bearing: value.bearing,
+            origin: value.startID,
+            destination: value.endID,
+            interpolatePos: d3.geoInterpolate([value.x1, value.y1],
+                [value.x2, value.y2])
+          }));
+      // if (this.state.vehicles1 == null) {
+      //   this.state.vehicles1 = [];
+      // }
+    }
+    this.state.plotdata2.ticks.push(this.current_time);
+    this.state.plotdata2.counts.push(vehicles.size);
+    this.state.plotdata2.totals.push(total);
+    this.state.plotdata2.arrived.push(arrived);
+    this.succeed = true;
+    this.current_time += this.buffer_time;
+    // With new data structure, the following operations can be saved
+    // Calculate link speed
+    // Create special layer for selected vehicle
+    // Calculate vehicle location
+  }
 
   // Vehicle location, use intercept to reduce the network load
   startAnimation = () => {
     if (this.current_time >= (this.last_time)) {
       console.log("Piece 1 take care of this update.");
-      console.log(this.current_time);
       this.fetchData(this.last_time+this.time_step);
     }
     else {
-      // console.log(this.state.data)
-      if (this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)]) {
-        // Calculate link speed
-        const roadSpeed = new Map(linkdict);
-        const roadCount = new Map(linkdict);
-        for ( let i = 0; i< this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)].length; i++) {
-          const record = this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)][i]
-          const roadID = record[12];
-          roadSpeed.set(roadID, roadSpeed.get(roadID)+record[5])
-          roadCount.set(roadID, roadCount.get(roadID)+1)
-        }
-        // Create special layer for selected vehicle
-        // Calculate vehicle location
-        if (this.state.subswitch) {
-          this.fail_count=0; // refresh the fail count
-          this.setState({
-            subswitch: 1 - this.state.subswitch,
-            roadspeed: roadSpeed,
-            roadcount: roadCount,
-            vehicles2:
-                this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)].map(d => ({
-                  id: d[0],
-                  lon: d[1],
-                  lat: d[2],
-                  speed: d[5],
-                  originx: d[6],
-                  originy: d[7],
-                  destx: d[8],
-                  desty: d[9],
-                  nearlyArrived: d[10],
-                  type: d[11],
-                  bearing: getDirection(d[1], d[2], d[3], d[4]),
-                  interpolatePos: d3.geoInterpolate([d[1], d[2]], [d[3], d[4]])
-                }))
-          }, () => {
-            let avg = 0;
-            for (var i = 0; i<this.state.vehicles2.length; i++) {
-              avg += this.state.vehicles2[i].speed;//console.log(this.state.vehicles.indexOf(this.state.vehicles2[i].id));
-              if (this.state.vehicles.indexOf(this.state.vehicles2[i].id) == -1) {
-                this.state.vehicles.push(this.state.vehicles2[i].id);
-              }
-            }
-              this.setState({ vehicles2speed: Math.round(avg * 3.6 / this.state.vehicles2.length) });
-            this.state.plotdata2.ticks.push(this.current_time);
-            //let prev = this.state.plotdata2.totals.length > 0 ? this.state.plotdata2.totals[this.state.plotdata2.totals.length-1] : 0;
-            this.state.plotdata2.counts.push(this.state.vehicles2.length);
-            //this.state.plotdata2.totals.push(this.state.vehicles2.length > prev ? this.state.vehicles2.length : prev);
-            this.state.plotdata2.totals.push(this.state.vehicles.length);
-            let a = this.state.vehicles2.filter(v => {
-              return v.nearlyArrived > 0;//v.lon == v.destx && v.lat == v.desty;
-            });
-            this.setState({ arrived: this.state.arrived + a.length });
-            this.state.plotdata2.arrived.push(this.state.arrived);
-            this.current_time += this.buffer_time;
-            this.currentFrame = 0;
-            this.timer = d3.timer(this.animationFrame);
-          })
-        }
-        else {
-          this.setState({
-            subswitch: 1-this.state.subswitch,
-            roadspeed: roadSpeed,
-            roadcount: roadCount,
-            vehicles1:
-                this.state.data[(this.current_time+this.buffer_time+20).toFixed(1)].map(d => ({
-                  id: d[0],
-                  lon: d[1],
-                  lat: d[2],
-                  speed: d[5],
-                  originx: d[6],
-                  originy: d[7],
-                  destx: d[8],
-                  desty: d[9],
-                  nearlyArrived: d[10],
-                  type: d[11],
-                  bearing: getDirection(d[1], d[2], d[3], d[4]),
-                  interpolatePos: d3.geoInterpolate([d[1], d[2]], [d[3], d[4]])
-                }))}, ()=> {
-            let avg = 0;
-            for (var i = 0; i<this.state.vehicles1.length; i++) {
-              avg += this.state.vehicles1[i].speed;
-              if (this.state.vehicles.indexOf(this.state.vehicles1[i].id) == -1) {
-                this.state.vehicles.push(this.state.vehicles1[i].id);
-              }
-            }
-              this.setState({ vehicles1speed: Math.round(avg * 3.6 / this.state.vehicles1.length) });
-            this.state.plotdata2.ticks.push(this.current_time);
-            //let prev = this.state.plotdata2.totals.length > 0 ? this.state.plotdata2.totals[this.state.plotdata2.totals.length-1] : 0;
-            this.state.plotdata2.counts.push(this.state.vehicles1.length);
-            //this.state.plotdata2.totals.push(this.state.vehicles1.length > prev ? this.state.vehicles1.length : prev);
-            this.state.plotdata2.totals.push(this.state.vehicles.length);
-            let a = this.state.vehicles1.filter(v => {
-              return v.nearlyArrived > 0;//v.lon == v.destx && v.lat == v.desty;
-            });
-            this.setState({ arrived: this.state.arrived + a.length });
-            this.state.plotdata2.arrived.push(this.state.arrived);
-            this.current_time += this.buffer_time;
-            this.currentFrame = 0;
-            this.timer = d3.timer(this.animationFrame);
-          })
-        }
+      console.log((this.current_time+this.buffer_time));
+      if (this.state.data[(this.current_time+this.buffer_time)] && this.succeed) {
+        this.succeed = false;
+        // process data
+        this.processData(this.current_time+this.buffer_time).then(()=>{
+          // start the animation
+          this.currentFrame = 0;
+          this.timer = d3.timer(this.animationFrame);
+        });
       }
       else {
         // The internet speed does not support this visualization speed, let's make the speed lower and reload the visualization
         this.fail_count+=1
-        //console.log("Piece 2 take care of this update.");
-        //console.log(this.current_time)
+        console.log("Piece 2 take care of this update.");
         if (this.fail_count>5) {
           this.fail_count=0;
           this.restartAnimation(); // Fail to load data, skip the current tick
-        } else {
-          sleep(500).then(() => {
-            this.startAnimation();
-          })
         }
       }
     }
-  };
-
+  }
+  // animated the prepared layer
   animationFrame = () => {
-    //console.log(this.currentFrame)
     if (this.currentFrame>=(this.framesPerTick-this.state.settings.speed)) {
       if (this.timer) {
         this.timer.stop();
+        this.startAnimation();
       }
-      this.startAnimation()
     }
     else {
       if (this.state.subswitch) {
         let {vehicles1} = this.state;
-        vehicles1 = vehicles1.map(d => {
-          const [lon, lat] = d.interpolatePos(this.currentFrame / (this.framesPerTick-this.state.settings.speed));
-          return {
-            ...d,
-            lon,
-            lat
-          };
-        });
+        if(vehicles1.length>0){
+          vehicles1 = vehicles1.map(d => {
+            const [lon, lat] = d.interpolatePos(this.currentFrame / (this.framesPerTick-this.state.settings.speed));
+            return {
+              ...d,
+              lon,
+              lat
+            };
+          });
+        }
         if (this.state.settings.play) {
-          this.currentFrame += 1;
-          this.setState({vehicles1});
+          this.setState({vehicles1: vehicles1},()=>{
+            this.currentFrame+=1;
+          });
         }
       }
-      else {
+      else{
         let {vehicles2} = this.state;
-        vehicles2 = vehicles2.map(d => {
-          const [lon, lat] = d.interpolatePos(this.currentFrame / (this.framesPerTick-this.state.settings.speed));
-          return {
-            ...d,
-            lon,
-            lat
-          };
-        });
+        if(vehicles2.length>0){
+          vehicles2 = vehicles2.map(d => {
+            const [lon, lat] = d.interpolatePos(this.currentFrame / (this.framesPerTick-this.state.settings.speed));
+            return {
+              ...d,
+              lon,
+              lat
+            };
+          });
+        }
         if (this.state.settings.play) {
-          this.currentFrame += 1;
-          this.setState({vehicles2});
+          this.setState({vehicles2: vehicles2},()=> {
+            this.currentFrame += 1;
+          });
         }
       }
     }
@@ -799,6 +828,8 @@ class App extends Component{
   _onSelectVehicle({object}) {
     console.log('Selected');
     console.log(object);
+    console.log(zonelist[object.origin].geometry.coordinates);
+    console.log(zonelist[object.destination].geometry.coordinates);
     this.setState({selected_vehicle:object});
     /*this.setState({selected_vehicle:{id:object.id,
         originx:object.originx,
@@ -835,8 +866,7 @@ class App extends Component{
         hovered_object && (
             <div className="tooltipp" style={{top: y, left: x}}>
               <div> Vehicle id: {hovered_object.id} </div>
-              <div> Speed: {(hovered_object.speed*3.6).toFixed(2)} km/h</div>
-              <div> Type: {hovered_object.type} </div>
+              <div> Speed: {(hovered_object.speed* 2.2374).toFixed(2)} mph</div>
             </div>
         )
     );
@@ -844,14 +874,13 @@ class App extends Component{
 
   // Tooltip for roads
   _renderTooltip2() {
-    const { x2, y2, hovered_link, roadcount, roadspeed} = this.state;
+    const { x2, y2, hovered_link, roads} = this.state;
     return (
         // if hoveredObject is null, then the rest part won't be execute
         hovered_link && (
             <div className="tooltipp" style={{top: y2, left: x2}}>
               <div> Link id: {hovered_link.properties.Id} </div>
-              <div> Average Speed: {(roadcount.get(hovered_link.properties.Id)==0)?-1:
-                  (roadspeed.get(hovered_link.properties.Id)*3.6/(roadcount.get(hovered_link.properties.Id))).toFixed(2)} km/h</div>
+              <div> Average Speed: {(roads.get(hovered_link.properties.Id).speed *2.2374).toFixed(2)} mph</div>
             </div>
         )
     );
@@ -919,7 +948,7 @@ class App extends Component{
             sizeScale: 20,
             getPosition: d => [d.lon, d.lat],
             getIcon: () => "vehicle",
-            getAngle: d => d.bearing-90,
+            getAngle: d => 360-d.bearing,
           }),
           new IconLayer({
             id: 'scatterplot-vehicles2',
@@ -940,7 +969,7 @@ class App extends Component{
             sizeScale: 20,
             getPosition: d => [d.lon, d.lat],
             getIcon: () => "vehicle",
-            getAngle: d => d.bearing-90,
+            getAngle: d => 360-d.bearing,
           }),
           new IconLayer({
             id: 'scatterplot-shelters-available',
@@ -953,7 +982,7 @@ class App extends Component{
                 x: 0,
                 y: 0,
                 width: 640,
-                height: 512
+                height: 512,
               }
             },
             sizeScale: 20,
@@ -986,7 +1015,7 @@ class App extends Component{
     if (this.state.settings.mode) {
       layers.unshift(new GeoJsonLayer({
         id: 'geojson-link',
-        data: linkData,
+        data: linklist,
         opacity: 1,
         lineWidthUnits: 'pixels',
         lineWidthMinPixels: 0,
@@ -997,8 +1026,8 @@ class App extends Component{
         pickable: true,
         onClick: this._onSelectLink,
         onHover: this._onHoverLink,
-        getLineColor: f => COLOR_SCALE((this.state.roadcount.get(f.properties.Id)==0)?40:
-            (this.state.roadspeed.get(f.properties.Id)*3.6/(this.state.roadcount.get(f.properties.Id)))),
+        getLineColor: f => COLOR_SCALE(
+            (this.state.roads.get(f.properties.Id).speed*2.2374)),
         getLineWidth: () => 200,//(this.state.roadcount.get(f.properties.Id)==0)?0: 200,
         updateTriggers: {
           getLineColor: this.current_time,
@@ -1023,7 +1052,7 @@ class App extends Component{
             }
           },
           sizeScale: 50,
-          getPosition:  d => [d.originx, d.originy],
+          getPosition:  d => zonelist[d.origin-1].geometry.coordinates,
           getIcon: () => "origin_pin",
         }),
         new IconLayer({
@@ -1040,7 +1069,7 @@ class App extends Component{
             }
           },
           sizeScale: 50,
-          getPosition: d => [d.destx, d.desty],
+          getPosition: d => zonelist[d.destination-1].geometry.coordinates,
           getIcon: () => "dest_pin",
         }),
         new IconLayer({
@@ -1062,7 +1091,7 @@ class App extends Component{
           sizeScale: 20,
           getPosition: d => [d.lon, d.lat],
           getIcon: () => "vehicle",
-          getAngle: d => d.bearing-90,
+          getAngle: d => 360-d.bearing,
         }),
         new IconLayer({
           id: 'scatterplot-vehicle-selected2',
@@ -1083,14 +1112,14 @@ class App extends Component{
           sizeScale: 20,
           getPosition: d => [d.lon, d.lat],
           getIcon: () => "vehicle",
-          getAngle: d => d.bearing-90,
+          getAngle: d => 360-d.bearing,
         })
       ]);
     }
     if (this.state.synchronized) {
       layers.unshift(new GeoJsonLayer({
         id: 'geojson-link2',
-        data: linkData,
+        data: linklist,
         opacity: 1,
         lineWidthUnits: 'pixels',
         lineWidthMinPixels: 0,
@@ -1153,17 +1182,17 @@ class App extends Component{
                 onChange={this.updateTheme}
                 />
           </div>
+          <Legend {...this.state} />
           <div className="app-pane app-stats">
             <Panel {...this.state} />
           </div>
           <div className="app-pane app-plots">
-            <Chart {...this.state} 
-              roadData={linkData} />
+            <Chart {...this.state}
+                   roadData={linklist} />
           </div>
           <div className="app-pane app-status d-none">
             <span className="spinner-border spinner-border-sm" role="status"></span> <span className="app-status-message">Loading data...</span>
           </div>
-          <Legend {...this.state} />
           <Toast
             toastList={this.state.messages}
             position="top-right"
@@ -1174,5 +1203,6 @@ class App extends Component{
     );
   }
 }
+
 
 export default App;

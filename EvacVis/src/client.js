@@ -6,7 +6,7 @@ export class Client extends Component {
         super(props);
         this.state = {
             address: "tnet1.ecn.purdue.edu:47906",
-            hist_addr:"http://localhost:8080/test_data/", //"https://engineering.purdue.edu/HSEES/test/instance_0/",
+            hist_addr:"http://localhost:8000/", //"https://engineering.purdue.edu/HSEES/test/instance_0/",
             message: "",
             max_tick: 10
         }

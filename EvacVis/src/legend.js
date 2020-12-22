@@ -29,7 +29,7 @@ export class Legend extends Component {
 
         return (
             <div className="legend-panel">
-                Legend (km/h)
+                Legend (mph)
                 <svg height="25" width="350" id="map-legend"></svg>
             </div>
         );
