@@ -142,6 +142,7 @@ class App extends Component{
       loaded: false, // whether or not history is loaded
       data_url: null,
       prefix: null,
+      prefix2: null,
       dialog: false,
       messages: [], // messages (errors, success, etc)
       arrived: 0, // number of arrived vehicles
@@ -208,6 +209,7 @@ class App extends Component{
   last_time = this.current_time; // Update_time
   timer = null;
   time_step = 40; // Ticks per file
+  jump_step = 6000; // Ticks per jump
   buffer_time = 20; // Buffer_time for loading new data
   fail_count = 0; // Numbers of fails, if there are over 5 fails, restart the visualization, otherwise wait.
   currentFrame = null;
@@ -523,8 +525,25 @@ class App extends Component{
         type: 'success'
       }]});
 
+      let prefix = null;
+      let prefix2 = null;
+
+      console.log(file_names);
+      for(const file_name of file_names){
+        if(file_name.includes("snapshot")){
+          prefix = file_name;
+          break;
+        }
+      }
+      for(const file_name of file_names){
+        if(file_name.includes("vehicle-list")){
+          prefix2 = file_name.substring(0, file_name.length-1);
+          break;
+        }
+      }
+
       sleep(1000).then(()=>{
-        this.setState({data_url: dir, prefix: file_names[0]}, ()=>
+        this.setState({data_url: dir, prefix:prefix, prefix2:prefix2}, ()=>
             this.resetCurrentTime())
       });
     } else {
@@ -567,7 +586,7 @@ class App extends Component{
   resetCurrentTime() {
     let new_time =  (Math.min(parseFloat(document.getElementsByName("new_time")[0].value), this.state.maximal_time)/0.3/this.time_step).toFixed(0)*this.time_step;
     console.log(new_time)
-    this.current_time = new_time
+    this.current_time = (new_time/this.jump_step).toFixed(0) * this.jump_step;
     this.last_time = this.current_time; // Update_time
     this.last_time = this.current_time; // Update_time
     this.timer = null;
@@ -581,21 +600,66 @@ class App extends Component{
     if (this.timer) {
       this.timer.stop();
     }
-    d3.json(this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json")
-      .then(
-        (new_data) => this.setState({subdata: new_data, subswitch: 0, data: []},
-            () => {
-              this.fetchData(this.last_time+this.time_step);
-            }
-        ))
-      .catch(() => {
-        this.setState({messages: [...this.state.messages, {
-          id: Math.floor((Math.random() * 101) + 1),
-          title: 'Error',
-          description: 'Failed to load JSON file: ' + this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json",
-          type: 'danger'
-        }]});
-      });
+    // Load the initial location data
+    if(this.last_time>0){
+      let vehicles = new Map();
+      let total = 0;
+      console.log(this.state.prefix2);
+      d3.json(this.state.data_url+"/"+this.state.prefix2+(this.last_time/this.jump_step+1)+".json").then(
+          (new_data) => {
+            Object.keys(new_data).forEach((key) => {
+              let fields = new_data[key].split(',');
+              console.log(fields);
+              console.log(key);
+              vehicles.set(Number(key), {startID: Number(fields[0]),
+                endID: Number(fields[1]),
+                x1: Number(fields[2]),
+                x2: Number(fields[2]),
+                y1: Number(fields[3]),
+                y2: Number(fields[3]),
+                speed: 0,
+                bearing: 0});
+              total+=1;
+            });
+            this.setState({vehicles:vehicles, total:total},()=>{
+              // Load the vehicle trajectory data
+              d3.json(this.state.data_url+"/"+this.state.prefix+"."+(this.last_time/this.time_step+1)+".json")
+                  .then(
+                      (new_data) => this.setState({subdata: new_data, subswitch: 0, data: []},
+                          () => {
+                            this.fetchData(this.last_time+this.time_step);
+                          }
+                      ))
+                  .catch(() => {
+                    this.setState({messages: [...this.state.messages, {
+                        id: Math.floor((Math.random() * 101) + 1),
+                        title: 'Error',
+                        description: 'Failed to load JSON file: ' + this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json",
+                        type: 'danger'
+                      }]});
+                  });
+            });
+          }
+      )
+    }
+    else{
+      // Load the vehicle trajectory data
+      d3.json(this.state.data_url+"/"+this.state.prefix+"."+(this.last_time/this.time_step+1)+".json")
+          .then(
+              (new_data) => this.setState({subdata: new_data, subswitch: 0, data: []},
+                  () => {
+                    this.fetchData(this.last_time+this.time_step);
+                  }
+              ))
+          .catch(() => {
+            this.setState({messages: [...this.state.messages, {
+                id: Math.floor((Math.random() * 101) + 1),
+                title: 'Error',
+                description: 'Failed to load JSON file: ' + this.state.data_url+"/"+this.state.prefix+"."+((this.last_time)/40+1)+".json",
+                type: 'danger'
+              }]});
+          });
+    }
   }
 
   //'vehicleID', 'startx', 'starty','endx','endy', 'speed', 'originx','originy','destx','desty', 'nearlyArrived', 'type'
@@ -662,12 +726,28 @@ class App extends Component{
       this.state.data[tick].vehicles.forEach((veh)=>{
         let fields = veh.split(',');
         let v = vehicles.get(Number(fields[0]));
-        // Update x2, y2
-        v.x2 = Number(fields[1]);
-        v.y2 = Number(fields[2]);
-        v.speed = Number(fields[3]);
-        v.bearing = Number(fields[4]);
-        total_v += Number(fields[3]);
+        if(v){
+          // Update x2, y2
+          v.x2 = Number(fields[1]);
+          v.y2 = Number(fields[2]);
+          v.speed = Number(fields[3]);
+          v.bearing = Number(fields[4]);
+          total_v += Number(fields[3]);
+        }
+        else{
+          // Set x2, y2
+          vehicles.set(Number(fields[0]), {
+            startID: 0,
+            endID: 0,
+            x1: Number(fields[1]),
+            x2: Number(fields[1]),
+            y1: Number(fields[2]),
+            y2: Number(fields[2]),
+            speed: Number(fields[3]),
+            bearing: Number(fields[4])});
+          total_v += Number(fields[3]);
+        }
+
       });
 
       // Update road data, features include: ID, num_vehicle, speed
