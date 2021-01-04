@@ -23,8 +23,8 @@ import car4 from "../res/car4.png";
 import car2 from "../res/car2.png";
 import PinOrigin from "!file-loader!../res/pin_red.png";
 import PinDestination from "!file-loader!../res/pin_blue.png";
-import ShelterFull from "!file-loader!../res/shelter_full.svg";
-import ShelterOpen from "!file-loader!../res/shelter_open.svg";
+import ShelterFull from "!file-loader!../res/shelter_full.png";
+import ShelterOpen from "!file-loader!../res/shelter_open.png";
 
 // const { promisify } = require('util')
 
