@@ -47,8 +47,8 @@ const linkdict = new Map();
 let zonelist = [];
 let linklist = [];
 // let zoneData = [];
-let shelteropenData = []; // Let the shelter temporally unchanged
-let shelterfullData = [];
+let shelterdict = new Map(); // Trake the shelter info
+let shelterlist = [];
 /*for (var i = 0; i<linkData['features'].length; i++) {
   linkdict.set(linkData['features'][i]['properties']['Id'],0);
 }*/
@@ -149,7 +149,8 @@ class App extends Component{
       total: 0, // number of generated vehicles
       vehicles: new Map(),
       roads: linkdict,
-      shelters: {
+      shelters: shelterdict,
+      shelters_agg: {
         occupancy: 0,
         capacity: 0
       },
@@ -259,25 +260,38 @@ class App extends Component{
       .then(function(data) {
         // shelteropenData = data.features.filter(d => { return d.properties.CapReporte < d.properties.CapPersons; });
         // shelterfullData = data.features.filter(d => { return d.properties.CapReporte >= d.properties.CapPersons; });
-        let occupants = 0;
+        // let occupants = 0;
         let capacit = 0;
-
         for (var i = 0; i<data['features'].length; i++) {
-          if (!isNaN(data['features'][i].properties.CapReporte)) {
-            occupants += parseInt(data['features'][i].properties.CapReporte);
-          }
-          if (!isNaN(data['features'][i].properties.CapPersons)) {
-            capacit += parseInt(data['features'][i].properties.CapPersons);
-          }
-
-          if (data['features'][i].properties.CapReporte < data['features'][i].properties.CapPersons) {
-            shelteropenData.push(data['features'][i]);
-          } else {
-            shelterfullData.push(data['features'][i]);
-          }
+          capacit += parseInt(data['features'][i].properties.DummyCap);
+          shelterlist.push(data['features'][i])
+          shelterdict.set(data['features'][i]['properties']['Id'], {occupancy: 0, capacity:
+                parseInt(data['features'][i]['properties']['DummyCap'])})
         }
 
-        that.setState({shelters: {occupancy: occupants, capacity: capacit}});
+        // console.log(shelterlist);
+
+        // console.log(shelterdict)
+        // console.log(capacit)
+
+        // for (var i = 0; i<data['features'].length; i++) {
+        //   if (!isNaN(data['features'][i].properties.CapReporte)) {
+        //     occupants += parseInt(data['features'][i].properties.CapReporte);
+        //   }
+        //   if (!isNaN(data['features'][i].properties.CapPersons)) {
+        //     capacit += parseInt(data['features'][i].properties.CapPersons);
+        //   }
+        //
+        //   if (data['features'][i].properties.CapReporte < data['features'][i].properties.CapPersons) {
+        //     shelteropenData.push(data['features'][i]);
+        //   } else {
+        //     shelterfullData.push(data['features'][i]);
+        //   }
+        // }
+
+        that.setState({shelters_agg: {occupancy: 0, capacity: capacit}, shelters: shelterdict}).then(()=>{
+          console.log(this.state.shelters_agg);
+        });
 
         loaded++;
 
@@ -699,7 +713,7 @@ class App extends Component{
   processData = async (tick) => {
     // console.log("Processing data");
     // console.log(tick);
-    let {vehicles, roads, shelters, arrived, total} = this.state;
+    let {vehicles, roads, shelters, shelters_agg, arrived, total} = this.state;
     let total_v = 0; // For calculating avg speed
     if(this.state.data[tick]){
       // Update vehicle data, features include: startID, endID, segment[x1, y1, x2, y2], bearing
@@ -747,17 +761,23 @@ class App extends Component{
             bearing: Number(fields[4])});
           total_v += Number(fields[3]);
         }
-
       });
 
       // Update road data, features include: ID, num_vehicle, speed
       this.state.data[tick].roads.forEach((road)=>{
         let fields = road.split(',');
-        let r = roads. get(Number(fields[0]));
+        let r = roads.get(Number(fields[0]));
         r.count = Number(fields[1]);
         r.speed = Number(fields[2]);
       });
       // Update shelter data, do not need to consider right now
+      this.state.data[tick].shelters.forEach((shelter)=>{
+        let fields = shelter.split(',');
+        let s = shelters.get(-Number(fields[0]));
+        let old_occupancy = s.occupancy;
+        s.occupancy = Number(fields[1]);
+        shelters_agg.occupancy += Number(fields[1]) - old_occupancy;
+      })
 
       // Updated the numOfArrived vehicles
       this.state.data[tick].arrVehs.forEach((arrVeh)=>{
@@ -770,6 +790,7 @@ class App extends Component{
     this.fail_count = 0; // refresh the fail count
     this.state.roads = roads;
     this.state.shelters = shelters;
+    this.state.shelters_agg = shelters_agg;
     this.state.total = total;
     this.state.arrived = arrived;
     this.state.vehicles = vehicles;
@@ -980,6 +1001,7 @@ class App extends Component{
   }
 
   render() {
+    // console.log(linklist)
     let layers = [];
     if (!this.state.synchronized) {
       if (this.state.settings.style==1) {
@@ -1052,41 +1074,53 @@ class App extends Component{
             getAngle: d => 360-d.bearing,
           }),
           new IconLayer({
-            id: 'scatterplot-shelters-available',
-            data: shelteropenData, //.filter(d => { return d.properties.CapReporte < d.properties.CapPersons; }),
+            id: 'scatterplot-shelters',
+            data: shelterlist,
             //visible: 1,
             pickable: true,
-            iconAtlas: ShelterOpen,
-            iconMapping:{
-              shelter:{
-                x: 0,
-                y: 0,
-                width: 640,
-                height: 512,
-              }
-            },
+            // iconMapping:{
+            //   shelter:{
+            //     x: 0,
+            //     y: 0,
+            //     width: 640,
+            //     height: 512,
+            //   }
+            // },
             sizeScale: 20,
             getPosition: d => [d.properties.Lon, d.properties.Lat],
-            getIcon: () => "shelter"
+            getIcon: d => (this.state.shelters.get(d.properties.Id).capacity > this.state.shelters.get(d.properties.Id).occupancy) ? ({
+              url: ShelterOpen,
+              width: 640,
+              height: 512,
+              anchorY: 0
+            }): ({
+              url: ShelterFull,
+              width: 640,
+              height: 512,
+              anchorY: 0
+            }),
+            updateTriggers: {
+              getIcon: this.current_time,
+            }
           }),
-          new IconLayer({
-            id: 'scatterplot-shelters-full',
-            data: shelterfullData, //.filter(d => { return d.properties.CapReporte < d.properties.CapPersons; }),
-            //visible: 1,
-            pickable: true,
-            iconAtlas: ShelterFull,
-            iconMapping:{
-              shelter:{
-                x: 0,
-                y: 0,
-                width: 640,
-                height: 512
-              }
-            },
-            sizeScale: 20,
-            getPosition: d => [d.properties.Lon, d.properties.Lat],
-            getIcon: () => "shelter"
-          })
+          // new IconLayer({
+          //   id: 'scatterplot-shelters-full',
+          //   data: shelterfullData, //.filter(d => { return d.properties.CapReporte < d.properties.CapPersons; }),
+          //   //visible: 1,
+          //   pickable: true,
+          //   iconAtlas: ShelterFull,
+          //   iconMapping:{
+          //     shelter:{
+          //       x: 0,
+          //       y: 0,
+          //       width: 640,
+          //       height: 512
+          //     }
+          //   },
+          //   sizeScale: 20,
+          //   getPosition: d => [d.properties.Lon, d.properties.Lat],
+          //   getIcon: () => "shelter"
+          // })
         ])
       }
     }

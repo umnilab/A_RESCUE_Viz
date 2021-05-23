@@ -23,7 +23,9 @@ export class Panel extends Component {
     }
 
     render() {
-        const {vehicles1, vehicles2, avgspeed, selected_vehicle, selected_link, shelters} = this.props;
+        const {vehicles1, vehicles2, avgspeed, selected_vehicle, selected_link, shelters_agg} = this.props;
+
+        // console.log(shelters_agg);
 
         let collapsed = this.state.collapsed;
         let className = collapsed ? "info-panel card collapsed" : "info-panel card expanded";
@@ -79,17 +81,17 @@ export class Panel extends Component {
                                 <span className="icon">
                                     <ShelterOpen />
                                 </span>
-                                <span className="badge badge-light info-value">{(shelters.capacity - shelters.occupancy).toLocaleString()}</span>
+                                <span className="badge badge-light info-value">{(shelters_agg.capacity - shelters_agg.occupancy).toLocaleString()}</span>
                             </div>
 
                             <div className="info-group container-fluid">
                                 <div className="row">
                                     <div className="col-8">Total occupancy:</div>
-                                    <div className="col-4 text-right info-value">{shelters.occupancy.toLocaleString()}</div>
+                                    <div className="col-4 text-right info-value">{shelters_agg.occupancy.toLocaleString()}</div>
                                 </div>
                                 <div className="row">
                                     <div className="col-8">Remaining space:</div>
-                                    <div className="col-4 text-right info-value">{(shelters.capacity - shelters.occupancy).toLocaleString()}</div>
+                                    <div className="col-4 text-right info-value">{(shelters_agg.capacity - shelters_agg.occupancy).toLocaleString()}</div>
                                 </div>
                                 <div className="row">
                                     <div className="col-5">
