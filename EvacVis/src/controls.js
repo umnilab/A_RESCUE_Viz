@@ -12,6 +12,14 @@ export const TRIPS_CONTROLS = {
     value: 0,
     optValue: [{label: "Off", value: 0},{label: "On", value: 1}]
   },
+  contour: {
+    displayName: 'Evacuation contour map',
+    //type: 'boolean',
+    //value: false
+    type: 'select',
+    value: 0,
+    optValue: [{label: "Off", value: 0},{label: "On", value: 1}]
+  },
   style: {
     displayName: 'Display',
     type: 'select',
@@ -132,6 +140,14 @@ export class LayerControls extends Component {
                 propType={propTypes['mode']}
                 onChange={this._onValueChange.bind(this)}
               />
+            <Setting
+                key="contour"
+                settingName="contour"
+                settingLabel={propTypes['contour'].displayName}
+                value={settings['contour']}
+                propType={propTypes['contour']}
+                onChange={this._onValueChange.bind(this)}
+            />
             <Setting
                 key="style"
                 settingName="style"

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="BranchesTreeState">
+    <expand />
+    <select />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="87e8f3dc-c897-4541-8898-a337a18dbe7a" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/EvacVis/dist/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/EvacVis/dist/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/EvacVis/dist/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/EvacVis/dist/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/EvacVis/src/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/EvacVis/src/app.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/EvacVis/src/controls.js" beforeDir="false" afterPath="$PROJECT_DIR$/EvacVis/src/controls.js" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="interface" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="1ikyFd0wRRRE3fzYFDGxuQYqnQI" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+    <option name="showMembers" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="two.files.diff.last.used.folder" value="$PROJECT_DIR$" />
+    <property name="vue.rearranger.settings.migration" value="true" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="87e8f3dc-c897-4541-8898-a337a18dbe7a" name="Default Changelist" comment="" />
+      <created>1602465782665</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1602465782665</updated>
+      <workItem from="1602465783730" duration="6777000" />
+      <workItem from="1603284246262" duration="863000" />
+      <workItem from="1603285826632" duration="1470000" />
+      <workItem from="1603856508118" duration="73000" />
+      <workItem from="1603871227580" duration="82000" />
+      <workItem from="1603970110913" duration="4906000" />
+      <workItem from="1604882948480" duration="14000" />
+      <workItem from="1605453425257" duration="4595000" />
+      <workItem from="1605503008005" duration="17933000" />
+      <workItem from="1606108942869" duration="8260000" />
+      <workItem from="1607279417462" duration="1212000" />
+      <workItem from="1608080286449" duration="25294000" />
+      <workItem from="1608196146379" duration="10000" />
+      <workItem from="1608481091012" duration="49901000" />
+      <workItem from="1608732865720" duration="2198000" />
+      <workItem from="1609526487377" duration="760000" />
+      <workItem from="1609529171172" duration="13139000" />
+      <workItem from="1609830799625" duration="36000" />
+      <workItem from="1621272485946" duration="4333000" />
+      <workItem from="1621738265736" duration="22811000" />
+      <workItem from="1622558119852" duration="18350000" />
+    </task>
+    <task id="LOCAL-00001" summary="Added shelter data processor">
+      <created>1621782488568</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1621782488568</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="1">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="FORCE_NON_EMPTY_COMMENT" value="true" />
+    <MESSAGE value="Added shelter data processor" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added shelter data processor" />
+    <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
+    <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="2036" y="310" width="1096" height="1020" key="CommitChangelistDialog2" timestamp="1621782488427">
+      <screen x="0" y="34" width="3840" height="1566" />
+    </state>
+    <state x="2036" y="310" width="1096" height="1020" key="CommitChangelistDialog2/0.34.3840.1566@0.34.3840.1566" timestamp="1621782488427" />
+    <state x="1953" y="364" width="1271" height="912" key="SettingsEditor" timestamp="1623618028346">
+      <screen x="0" y="34" width="3840" height="1566" />
+    </state>
+    <state x="1953" y="364" width="1271" height="912" key="SettingsEditor/0.34.3840.1566@0.34.3840.1566" timestamp="1623618028346" />
+    <state x="2084" y="490" width="1000" height="661" key="Vcs.Push.Dialog.v2" timestamp="1621782502109">
+      <screen x="0" y="34" width="3840" height="1566" />
+    </state>
+    <state x="2084" y="490" width="1000" height="661" key="Vcs.Push.Dialog.v2/0.34.3840.1566@0.34.3840.1566" timestamp="1621782502109" />
+    <state x="2578" y="500" width="758" height="634" key="find.popup" timestamp="1621274527859">
+      <screen x="0" y="34" width="3840" height="1566" />
+    </state>
+    <state x="2578" y="500" width="758" height="634" key="find.popup/0.34.3840.1566@0.34.3840.1566" timestamp="1621274527859" />
+    <state x="2168" y="387" width="840" height="1034" key="search.everywhere.popup" timestamp="1623677473183">
+      <screen x="0" y="34" width="3840" height="1566" />
+    </state>
+    <state x="2168" y="387" width="840" height="1034" key="search.everywhere.popup/0.34.3840.1566@0.34.3840.1566" timestamp="1623677473183" />
+  </component>
+</project>
