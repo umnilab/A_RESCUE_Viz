@@ -9,10 +9,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="87e8f3dc-c897-4541-8898-a337a18dbe7a" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/EvacVis/dist/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/EvacVis/dist/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/EvacVis/dist/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/EvacVis/dist/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/EvacVis/src/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/EvacVis/src/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/EvacVis/src/controls.js" beforeDir="false" afterPath="$PROJECT_DIR$/EvacVis/src/controls.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -75,7 +72,7 @@
       <workItem from="1609830799625" duration="36000" />
       <workItem from="1621272485946" duration="4333000" />
       <workItem from="1621738265736" duration="22811000" />
-      <workItem from="1622558119852" duration="18350000" />
+      <workItem from="1622558119852" duration="18825000" />
     </task>
     <task id="LOCAL-00001" summary="Added shelter data processor">
       <created>1621782488568</created>
