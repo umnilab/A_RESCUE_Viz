@@ -1,21 +1,31 @@
-/* global $ */ // jquery.js
+/*
+Visualization program for A-RESCUE 3.0
+Author: Zengxiang Lei
+Acknowledgement: The implementation idea is inspired by an example of real-time plane visualization
+in https://reactviz.holiday/webgl-airplanes/
+ */
 
+// Exterior layers/packages
 import React, {Component, } from 'react';
 import DeckGL, {IconLayer, GeoJsonLayer} from 'deck.gl';
 import {HeatmapLayer, ContourLayer} from '@deck.gl/aggregation-layers';
 import {StaticMap} from "react-map-gl";
 import * as d3 from "d3";
+import {scaleThreshold} from 'd3-scale';
+
+// Inner layers
 import {
   LayerControls,
   TRIPS_CONTROLS
 } from './controls';
-import {Panel} from "./panel"; // Control panel in the left upper corner
+import {Panel} from "./panel";
 import {Legend} from "./legend";
 import {Client} from "./client"
 import {Chart} from "./chart";
 import {Interface} from "./interface";
 import Toast from "./toast";
-import {scaleThreshold} from 'd3-scale';
+
+// Art material
 import car4 from "../res/car4.png";
 import car2 from "../res/car2.png";
 import PinOrigin from "!file-loader!../res/pin_red.png";
@@ -25,6 +35,7 @@ import ShelterOpen from "!file-loader!../res/shelter_open.png";
 
 // const { promisify } = require('util')
 
+// IMPORTANT: When publish, change this to a external variable with users' key
 const MAPBOX_ACCESS_TOKEN = "pk.eyJ1IjoibGVpemVuZ3hpYW5nIiwiYSI6ImNqNTM4NnV3YjA0Z2cyd3BnOXFuajg1YmoifQ.xC1N6Uxu4k-1LMjbSSM8NQ";
 
 var ws = null; // websocket
@@ -39,12 +50,14 @@ const initialViewState = {
   bearing: 0
 };
 
-//initialize link dictionary
+// Initialize link dictionary
 const linkdict = new Map();
 let zonelist = [];
 let linklist = [];
 // let zoneData = [];
-let shelterdict = new Map(); // Trake the shelter info
+
+// Track the shelter info
+let shelterdict = new Map();
 let shelterlist = [];
 /*for (var i = 0; i<linkData['features'].length; i++) {
   linkdict.set(linkData['features'][i]['properties']['Id'],0);
@@ -69,7 +82,7 @@ const CONTOURS = [
   {threshold: [120, 600], color: [0, 0, 255, 128]} // => Isoband for threshold range [6, 10)
 ];
 
-// Get direction based on start and end location, this function is not needed anymore.
+// Get direction based on start and end location
 // function getDirection(lon1, lat1, lon2, lat2) {
 //   var toRadians = function(v) { return v * Math.PI / 180; };
 //   var toDegrees = function(v) { return v * 180 / Math.PI; };
@@ -78,12 +91,13 @@ const CONTOURS = [
 //   return angleDegree
 // }
 
-// Sleep function for waiting data transferring.
+// Wait for data transferring.
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// load directories in the historical folder
+// Load directories in the historical folder
+// Don't know how to implement it use ReactJS so I use jQuery
 function loadHistories(my_url) {
   var result = [];
   $.ajax({
@@ -103,6 +117,7 @@ function loadHistories(my_url) {
   return result;
 }
 
+// Get the list of list of json file
 function parseDirectoryListing(text)
 {
   if (text === null) {
@@ -122,6 +137,7 @@ function parseDirectoryListing(text)
   return docs;
 }
 
+// Main class
 class App extends Component{
   constructor(props) {
     super(props);
@@ -143,14 +159,14 @@ class App extends Component{
       connected: false, // whether or not connect to the server
       synchronized: false, // false: asynchronized mode, loading data from the file directories, true: loading data directly from returned messages
       loaded: false, // whether or not history is loaded
-      data_url: null,
-      prefix: null,
-      prefix2: null,
+      data_url: null, // the data server's url
+      prefix: null, // the prefix of the trajectory file
+      prefix2: null,  // the prefix of the vehicle distribution file
       dialog: false,
       messages: [], // messages (errors, success, etc)
       arrived: 0, // number of arrived vehicles
       total: 0, // number of generated vehicles
-      vehicles: new Map(),
+      vehicles: new Map(), // key: vehicle ID, value: vehicle loc for two consecutive time, speed, etc
       roads: linkdict,
       shelters: shelterdict,
       shelters_agg: {
@@ -161,9 +177,8 @@ class App extends Component{
       vehicles2: [], // for rendering the layer
       traveltime: [-1,-1,-1,-1,-1,81.17,-1,71.17,58.065,-1,68.78,71.91,77.63,-1,-1,58.795,61.4075,-1,42.24,66.2225,63.167500000000004,45.89,-1,35.7425,83.765,-1,25.475,46.82,-1,164.015,-1,4.26,-1,-1,182.29250000000002,-1,152.35,-1,23.725,-1,23.555,-1,-1,-1,82.2225,215.525,-1,-1,-1,97.6875,-1,154.895,134.81833333333336,-1,-1,116.6,359.2075,152.76,710.42,-1,-1,-1,119.245,-1,-1,58.2775,-1,206.55,-1,26.981666666666666,-1,-1,-1,-1,-1,-1,-1,-1,23.228333333333335,-1,73.33,-1,80.89,31.52,75.745,-1,-1,176.40666666666667,76.895,124.44375,71.37,80.56,74.0475,119.17,485.385,150.595,193.57999999999998,598.245,-1,-1,-1,108.38,79.09,156.9075,172.965,-1,-1,174.0075,-1,156.52,135.665,-1,15.926666666666668,21.4825,23.965,-1,-1,8.07,51.177499999999995,-1,160.265,129.11399999999998,-1,-1,-1,148.545,180.94,-1,134.4,-1,122.07750000000001,-1,123.8825,219.245,129.46499999999997,93.69,183.9875,318.31,-1,29.935,-1,-1,-1,-1,14.26,-1,-1,101.735,134.005,-1,162.275,-1,209.4,-1,95.485,218.22,108.775,-1,-1,16.095,-1,-1,48.96,38.14,18.7,-1,50.72333333333333,-1,-1,26.395,10.831666666666669,17.755,-1,-1,-1,90.33,-1,-1,-1,59.53,-1,109.3775,-1,-1,-1,-1,40.06166666666667,37.2,-1,20.7725,79.955,-1,-1,137.30454545454543,187.045,-1,-1,-1,-1,-1,-1,-1,40.8325,132.0625,33.571250000000006,99.10499999999999,62.602500000000006,70.055,139.8,197.64749999999998,-1,40.31,-1,-1,171.715,44.025,-1,122.6875,234.99,194.275,-1,227.16,146.67,21.235,41.9,-1,23.96,-1,-1,109.0865,-1,-1,54.505,87.515,347.6625,-1,222.8775,46.225,-1,33.23,160.36,-1,105.30333333333333,-1,-1,-1,-1,174.305,137.17,-1,259.23249999999996,-1,-1,75.71,-1,-1,477.625,258.1,357.55,237.545,151.86,107.175,204.15,157.67,68.37,-1,79.545,-1,142.585,-1,553.2460000000004,-1,614.7091696113074,618.242598425197,-1,-1,-1,-1,-1,-1,-1,-1,-1,184.9875,385.46166666666664,-1,-1,284.0675,290.0933333333333,176.49,-1,41.025,41.6325,73.54,-1,30.95,84.0,132.77423076923077,142.59,92.64,185.1875,213.885,312.405,116.655,346.9683333333333,40.625,175.29,66.8775,73.11,74.705,-1,-1,174.865,296.39,855.935,-1,196.145,-1,-1,-1,-1,352.61,-1,-1,-1,15.5,-1,-1,-1,-1,-1,-1,-1,577.4405178571425,-1,-1,410.9875,-1,60.6,49.395,133.08,-1,31.465,34.5,-1,144.6925,119.75,169.42166666666668,-1,178.615,107.215,127.325,-1,-1,-1,-1,-1,-1,-1,268.255,76.025,-1,-1,117.91000000000001,115.28166666666665,10.5275,-1,-1,141.3221153846154,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,141.46541666666667,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,35.085,-1,61.245,33.38,39.26,-1,34.25,-1,-1,-1,47.14,-1,-1,53.099999999999994,-1,-1,27.58,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,122.74000000000001,158.57,-1,-1,43.56,50.66166666666667,60.26700000000001,64.21833333333333,30.778333333333336,29.465,-1,-1,50.72,-1,110.645,61.01,103.965,40.0725,-1,-1,-1,-1,-1,245.27512987012975,-1,-1,363.50286163522014,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,318.1710810810811,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,382.0893895348837,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,119.68041666666666,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,609.4437030075189,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,245.7625287356322,-1,-1,427.23496078431367,-1,-1,-1,-1,569.7889419795221,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,38.645,81.815,83.38,204.85750000000002,-1,17.31,-1,-1,22.945,18.44,-1,16.3475,-1,591.4468596491229,-1,82.385,119.855,164.025,-1,18.0825,-1,-1,-1,-1,16.005,-1,26.38,618.1889626556016,-1,-1,-1,-1,-1,-1,594.6104561403508,-1,632.3188395904435,-1,-1,-1,-1,120.62,89.51,101.855,-1,50.57,39.565,32.985,-1,-1,84.815,-1,31.895,115.155,45.275,60.045,13.49,26.281666666666666,29.355000000000004,35.32833333333333,217.44,-1,140.98,160.07,105.12,104.095,38.97,400.12,100.84,-1,133.74,33.41,106.835,172.72,137.125,-1,-1,-1,45.445,25.31,31.375,58.495000000000005,83.50750000000001,50.09,111.53,139.715,-1,-1,-1,-1,-1,116.335,95.115,75.97,138.32,68.295,-1,162.745,324.035,291.435,198.855,182.34,-1,-1,-1,151.39,235.755,82.51,42.2,-1,9.981666666666667,-1,14.675,92.07833333333333,78.75999999999999,63.445,106.3025,225.705,-1,295.21166666666664,-1,-1,13.345,38.458333333333336,35.665,166.55,44.29,44.12,-1,37.53,-1,-1,37.135,61.902499999999996,36.81,25.98,-1,-1,-1,68.6375,53.165,83.725,79.63000000000001,97.90833333333335,-1,-1,-1,206.965,94.685,-1,32.25,153.71249999999998,62.1775,-1,-1,130.52249999999998,101.53,-1,12.86,-1,-1,-1,-1,-1,-1,181.06,250.835,86.33,95.175,164.86,107.2575,101.38,197.50333333333333,-1,-1,140.895,101.4025,167.99833333333333,-1],
       avgspeed: 0, // average speed by vehicle
-      data_address: null,
       maximal_time: 3e6, //maximal ticks
-      options: {
+      options: { // for filling the configuration window
         name: "",
         demand: {
           options: []
@@ -180,7 +195,7 @@ class App extends Component{
           step: 1,
           default: 10
         },
-      }, //options for client side control
+      }, //options for user control
       settings: Object.keys(TRIPS_CONTROLS).reduce(
         (accu, key) => ({
           ...accu,
@@ -212,15 +227,15 @@ class App extends Component{
     this.resetCurrentTime = this.resetCurrentTime.bind(this);
   }
 
-  current_time = 0; // Visualization_time
-  last_time = this.current_time; // Update_time
+  current_time = 0; // current frame time
+  last_time = this.current_time; // time for reloading/updating the data
   timer = null;
-  time_step = 40; // Ticks per file
-  jump_step = 6000; // Ticks per jump
-  buffer_time = 20; // Buffer_time for loading new data
-  fail_count = 0; // Numbers of fails, if there are over 5 fails, restart the visualization, otherwise wait.
+  time_step = 40; // ticks per file
+  jump_step = 6000; // ticks per jump, i.e., only times of the jump_step are allowed
+  buffer_time = 20; // buffer time for loading new data
+  fail_count = 0; // numbers of fails, if there are over 5 fails, reset the data and restart, otherwise wait.
   currentFrame = null;
-  framesPerTick = 60; //The maximum frame per tick
+  framesPerTick = 60; //the maximum frame per tick
 
   // When open the webpage
   componentDidMount() {
@@ -249,6 +264,7 @@ class App extends Component{
 
     import('../res/road.json')
       .then(data => {
+        console.log("Loading road data.");
         for (var i = 0; i<data['features'].length; i++) {
           linkdict.set(data['features'][i]['properties']['Id'],{speed:13.508, count:0});
         }
@@ -256,30 +272,26 @@ class App extends Component{
 
         loaded++;
 
-        if (loaded == 3) {
+        if (loaded == 1) {
           document.querySelector('.app-status').classList.add('d-none');
         }
       })
-      .catch(error => error.code + ': An error occurred while loading the component');
+      .catch(error => console.log(error.code + ': An error occurred while loading the road component'));
+
 
     import('../res/shelters.json')
       .then(function(data) {
+        console.log("Loading shelter data.");
         // shelteropenData = data.features.filter(d => { return d.properties.CapReporte < d.properties.CapPersons; });
         // shelterfullData = data.features.filter(d => { return d.properties.CapReporte >= d.properties.CapPersons; });
         // let occupants = 0;
-        let capacit = 0;
+        let capcit = 0;
         for (var i = 0; i<data['features'].length; i++) {
-          capacit += parseInt(data['features'][i].properties.DummyCap);
+          capcit += parseInt(data['features'][i]['properties']['DummyCap']);
           shelterlist.push(data['features'][i])
           shelterdict.set(data['features'][i]['properties']['Id'], {occupancy: 0, capacity:
                 parseInt(data['features'][i]['properties']['DummyCap'])})
         }
-
-        // console.log(shelterlist);
-
-        // console.log(shelterdict)
-        // console.log(capacit)
-
         // for (var i = 0; i<data['features'].length; i++) {
         //   if (!isNaN(data['features'][i].properties.CapReporte)) {
         //     occupants += parseInt(data['features'][i].properties.CapReporte);
@@ -295,28 +307,28 @@ class App extends Component{
         //   }
         // }
 
-        that.setState({shelters_agg: {occupancy: 0, capacity: capacit}, shelters: shelterdict}).then(()=>{
-          console.log(this.state.shelters_agg);
-        });
+        that.setState({shelters_agg: {occupancy: 0, capacity: capcit}, shelters: shelterdict});
 
         loaded++;
 
-        if (loaded == 3) {
+        if (loaded == 1) {
           document.querySelector('.app-status').classList.add('d-none');
         }
       })
-      .catch(error => error.code + ': An error occurred while loading the component');
+      .catch(error => console.log(error.code + ': An error occurred while loading the shelter component'));
 
     import('../res/cbgs_centroid.json').then(function(data) {
+      console.log("Loading origin/destination data.");
       for (var i = 0; i < data['features'].length; i++){
         zonelist.push(data['features'][i])
       }
       loaded++;
 
-      if (loaded == 3) {
+      if (loaded == 1) {
         document.querySelector('.app-status').classList.add('d-none');
       }
-    }).catch()
+    }).catch(error => console.log(error.code + ': An error occurred while loading the zone component'));
+
   }
 
   // Client control
@@ -336,7 +348,6 @@ class App extends Component{
 
       // Connection established
       //that.setState({connected: true});
-
       ws.addEventListener('error', function() {
         that.setState({connected: false});
         that.setState({messages: [...that.state.messages, {
@@ -530,7 +541,7 @@ class App extends Component{
           console.log("Current max time tick is", max_time));
   }
 
-  // Visualization control
+  // Load historical data from a given url
   loadHistory() {
     let dir = document.getElementsByName("hist_txt")[0].value;
     //console.log(dir);
@@ -548,7 +559,7 @@ class App extends Component{
       let prefix = null;
       let prefix2 = null;
 
-      console.log(file_names);
+      // console.log(file_names);
       for(const file_name of file_names){
         if(file_name.includes("snapshot")){
           prefix = file_name;
@@ -582,7 +593,7 @@ class App extends Component{
     sleep(20000).then(()=>{
       let file_names = loadHistories(dir+'/instance_0/');
       sleep(10000).then(()=>{
-        console.log(file_names);
+        // console.log(file_names);
         this.setState({data_url: dir+'/instance_0', prefix: file_names[0]}, ()=> this.resetCurrentTime())
       })
     });
@@ -603,19 +614,22 @@ class App extends Component{
     this.setState({currentData:record},()=>console.log(this.state.currentData))
   }
 
+  // Helper function for loading history and jumping to new time steps
   resetCurrentTime() {
     let new_time =  (Math.min(parseFloat(document.getElementsByName("new_time")[0].value), this.state.maximal_time)/0.3/this.time_step).toFixed(0)*this.time_step;
-    console.log(new_time)
+    // console.log(new_time)
     this.current_time = (new_time/this.jump_step).toFixed(0) * this.jump_step;
     this.last_time = this.current_time; // Update_time
     this.last_time = this.current_time; // Update_time
     this.timer = null;
     this.currentFrame = null;
-    this.setState({plotdata2:{ticks:[], counts:[], arrived:[], totals:[]}}, ()=>this.restartAnimation());
+    let capcit = this.state.shelters_agg.capacity;
+    this.setState({shelters_agg: {occupancy: 0, capacity: capcit}, vehicles: new Map(),
+    arrived: 0, total: 0, plotdata2: {ticks:[0], counts:[0], arrived: [0], totals: [0]}}, ()=>this.restartAnimation());
   }
 
   // Core functions for visualizing trajectories
-  // Change the data processing here
+  // For future updates, update the data processing code here
   restartAnimation() {
     if (this.timer) {
       this.timer.stop();
@@ -624,7 +638,7 @@ class App extends Component{
     if(this.last_time>0){
       let vehicles = new Map();
       let total = 0;
-      console.log(this.state.prefix2);
+      // console.log(this.state.prefix2);
       d3.json(this.state.data_url+"/"+this.state.prefix2+(this.last_time/this.jump_step+1)+".json").then(
           (new_data) => {
             Object.keys(new_data).forEach((key) => {
@@ -792,8 +806,7 @@ class App extends Component{
       });
     }
 
-    // create the data for vehicle layer
-    this.fail_count = 0; // refresh the fail count
+    // Create the data for vehicle layer
     this.state.roads = roads;
     this.state.shelters = shelters;
     this.state.shelters_agg = shelters_agg;
@@ -840,7 +853,7 @@ class App extends Component{
     this.state.plotdata2.counts.push(vehicles.size);
     this.state.plotdata2.totals.push(total);
     this.state.plotdata2.arrived.push(arrived);
-    this.succeed = true;
+    // this.succeed = true;
     this.current_time += this.buffer_time;
     // With new data structure, the following operations can be saved
     // Calculate link speed
@@ -851,13 +864,13 @@ class App extends Component{
   // Vehicle location, use intercept to reduce the network load
   startAnimation = () => {
     if (this.current_time >= (this.last_time)) {
-      console.log("Piece 1 take care of this update.");
+      // console.log("Piece 1 take care of this update.");
       this.fetchData(this.last_time+this.time_step);
     }
     else {
-      console.log((this.current_time+this.buffer_time));
-      if (this.state.data[(this.current_time+this.buffer_time)] && this.succeed) {
-        this.succeed = false;
+      // console.log((this.current_time+this.buffer_time));
+      if (this.state.data[(this.current_time+this.buffer_time)]){// && this.succeed) {
+        // this.succeed = false;
         // process data
         this.processData(this.current_time+this.buffer_time).then(()=>{
           // start the animation
@@ -868,7 +881,7 @@ class App extends Component{
       else {
         // The internet speed does not support this visualization speed, let's make the speed lower and reload the visualization
         this.fail_count+=1
-        console.log("Piece 2 take care of this update.");
+        // console.log("Piece 2 take care of this update.");
         if (this.fail_count>5) {
           this.fail_count=0;
           this.restartAnimation(); // Fail to load data, skip the current tick
@@ -876,7 +889,7 @@ class App extends Component{
       }
     }
   }
-  // animated the prepared layer
+  // Animated the prepared layer
   animationFrame = () => {
     if (this.currentFrame>=(this.framesPerTick-this.state.settings.speed)) {
       if (this.timer) {
@@ -933,10 +946,10 @@ class App extends Component{
   }
 
   _onSelectVehicle({object}) {
-    console.log('Selected');
-    console.log(object);
-    console.log(zonelist[object.origin].geometry.coordinates);
-    console.log(zonelist[object.destination].geometry.coordinates);
+    // console.log('Selected');
+    // console.log(object);
+    // console.log(zonelist[object.origin].geometry.coordinates);
+    // console.log(zonelist[object.destination].geometry.coordinates);
     this.setState({selected_vehicle:object});
     /*this.setState({selected_vehicle:{id:object.id,
         originx:object.originx,

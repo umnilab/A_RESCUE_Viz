@@ -8,7 +8,7 @@ module.exports = {
   },
   output: {
     path: __dirname + '/dist',
-    publicPath: '/HSEES_Viz/EvacVis/',
+    //publicPath: '/HSEES_Viz/EvacVis/',
     filename: 'index.js',
     chunkFilename: '[name].bundle.js'
   },
@@ -61,7 +61,10 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: "[name].css",
       chunkFilename: "[id].css"
-    })
+    }),
+    new webpack.optimize.LimitChunkCountPlugin({
+      maxChunks: 2,
+    }),
   ],
   devServer: {
     contentBase: './dist',
@@ -69,3 +72,5 @@ module.exports = {
     watchContentBase: true
   }
 };
+
+
